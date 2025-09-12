@@ -1,0 +1,89 @@
+{
+  "sites": {
+    "linkedin": {
+      "name": "LinkedIn Jobs",
+      "domain": "linkedin.com",
+      "enabled": true,
+      "selectors": {
+        "jobContainer": ".jobs-search__results-list li",
+        "jobList": ".jobs-search__results-list",
+        "title": ".job-search-card__title a",
+        "company": ".job-search-card__subtitle-link",
+        "location": ".job-search-card__location",
+        "salary": ".job-search-card__salary-info",
+        "description": ".jobs-description-content__text",
+        "applyLink": ".job-search-card__title a",
+        "postedDate": ".job-search-card__listdate",
+        "jobType": ".job-search-card__metadata-item"
+      }
+    },
+    "indeed": {
+      "name": "Indeed",
+      "domain": "indeed.com",
+      "enabled": true,
+      "selectors": {
+        "jobContainer": ["[data-jk]", ".jobsearch-JobInfoHeader-title", "body"],
+        "jobList": "#mosaic-provider-jobcards",
+        "title": [".jobsearch-JobInfoHeader-title", "[data-testid=\"job-title\"] a", "h1"],
+        "company": ["[data-testid=\"company-name\"]", "[data-testid=\"inlineHeader-companyName\"]", ".jobsearch-CompanyInfoContainer a"],
+        "location": ["[data-testid=\"job-location\"]", ".jobsearch-JobInfoHeader-subtitle"],
+        "salary": ["[data-testid=\"attribute_snippet_testid\"]", ".jobsearch-JobMetadataHeader-item"],
+        "description": ["#jobDescriptionText", ".jobsearch-JobComponent-description", "[data-testid=\"job-description\"]"],
+        "applyLink": ["[data-testid=\"job-title\"] a", ".jobsearch-ApplyButton"],
+        "postedDate": ["[data-testid=\"myJobsStateDate\"]", ".jobsearch-JobMetadataHeader-item"],
+        "jobType": ["[data-testid=\"attribute_snippet_testid\"]", ".jobsearch-JobMetadataHeader-item"]
+      }
+    },
+    "glassdoor": {
+      "name": "Glassdoor",
+      "domain": "glassdoor.com",
+      "enabled": true,
+      "selectors": {
+        "jobContainer": "[data-test=\"jobListing\"]",
+        "jobList": "[data-test=\"jobListingContainer\"]",
+        "title": "[data-test=\"job-title\"]",
+        "company": "[data-test=\"employer-name\"]",
+        "location": "[data-test=\"job-location\"]",
+        "salary": "[data-test=\"job-salary\"]",
+        "description": "[data-test=\"jobDescriptionText\"]",
+        "applyLink": "[data-test=\"job-title\"] a",
+        "postedDate": "[data-test=\"job-age\"]",
+        "jobType": "[data-test=\"job-type\"]"
+      }
+    },
+    "ziprecruiter": {
+      "name": "ZipRecruiter",
+      "domain": "ziprecruiter.com",
+      "enabled": true,
+      "selectors": {
+        "jobContainer": ".job_content",
+        "jobList": "#job_list",
+        "title": ".job_link",
+        "company": ".company_name",
+        "location": ".job_location",
+        "salary": ".job_salary",
+        "description": ".job_description",
+        "applyLink": ".job_link",
+        "postedDate": ".job_age",
+        "jobType": ".job_type"
+      }
+    },
+    "monster": {
+      "name": "Monster",
+      "domain": "monster.com",
+      "enabled": true,
+      "selectors": {
+        "jobContainer": "[data-testid=\"job-card\"]",
+        "jobList": "[data-testid=\"job-results\"]",
+        "title": "[data-testid=\"job-title\"]",
+        "company": "[data-testid=\"company-name\"]",
+        "location": "[data-testid=\"job-location\"]",
+        "salary": "[data-testid=\"job-salary\"]",
+        "description": "[data-testid=\"job-description\"]",
+        "applyLink": "[data-testid=\"job-title\"] a",
+        "postedDate": "[data-testid=\"job-posted\"]",
+        "jobType": "[data-testid=\"job-type\"]"
+      }
+    }
+  }
+}
