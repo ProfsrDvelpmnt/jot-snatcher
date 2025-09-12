@@ -1154,12 +1154,23 @@ interface SupabaseAuthData {
   };
 }
 
+// Cache for auth data to reduce excessive calls
+let cachedAuthData: SupabaseAuthData | null = null;
+let lastAuthDataCheck = 0;
+const AUTH_DATA_CACHE_DURATION = 3000; // Cache for 3 seconds
+
 async function getSupabaseAuthData(): Promise<SupabaseAuthData | null> {
   try {
     // Check if extension context is still valid
     if (!chrome.runtime?.id) {
       console.log('⚠️ Extension context invalidated, skipping auth check');
       return null;
+    }
+
+    // Return cached data if it's still fresh
+    const now = Date.now();
+    if (cachedAuthData && (now - lastAuthDataCheck) < AUTH_DATA_CACHE_DURATION) {
+      return cachedAuthData;
     }
 
     console.log('🔍 Checking direct Supabase authentication...');
@@ -1187,19 +1198,28 @@ async function getSupabaseAuthData(): Promise<SupabaseAuthData | null> {
               currentUsage: authState.subscriptionInfo.currentUsage
             });
             
-            resolve({
+            const authData = {
               isLoggedIn: true,
               userId: authState.userId,
               userName: authState.userName,
               userEmail: authState.userEmail,
               subscriptionInfo: authState.subscriptionInfo
-            });
+            };
+            
+            // Cache the result
+            cachedAuthData = authData;
+            lastAuthDataCheck = now;
+            resolve(authData);
           } else {
             console.log('⚠️ User not authenticated via direct Supabase');
+            cachedAuthData = null;
+            lastAuthDataCheck = now;
             resolve(null);
           }
         } else {
           console.log('⚠️ No auth state received from background script');
+          cachedAuthData = null;
+          lastAuthDataCheck = now;
           resolve(null);
         }
       });
@@ -1349,7 +1369,7 @@ function injectLoginPrompt() {
         injectFloatingButton();
       }
     });
-  }, 2000); // Check every 2 seconds
+  }, 5000); // Check every 5 seconds
 }
 
 // Listen for messages from background script
@@ -1467,12 +1487,22 @@ initializeFloatingButton();
 
 // Monitor for Supabase authentication changes
 let lastAuthState: any = null;
+let lastAuthCheckTime = 0;
+const AUTH_CHECK_THROTTLE = 5000; // Only check every 5 seconds
+
 const monitorSupabaseAuth = async () => {
   // Check if extension context is still valid
   if (!chrome.runtime?.id) {
     console.log('⚠️ Extension context invalidated, stopping auth monitoring');
     return;
   }
+
+  // Throttle auth checks to reduce console spam
+  const now = Date.now();
+  if (now - lastAuthCheckTime < AUTH_CHECK_THROTTLE) {
+    return;
+  }
+  lastAuthCheckTime = now;
 
   const currentAuthData = await getSupabaseAuthData();
   const authChanged = JSON.stringify(currentAuthData) !== JSON.stringify(lastAuthState);
@@ -1503,8 +1533,8 @@ const monitorSupabaseAuth = async () => {
   }
 };
 
-// Monitor Supabase auth changes every 2 seconds
-setInterval(monitorSupabaseAuth, 2000);
+// Monitor Supabase auth changes every 10 seconds (throttled internally to 5 seconds)
+setInterval(monitorSupabaseAuth, 10000);
 
 // Re-inject on navigation (for SPAs)
 let lastUrl = location.href;
