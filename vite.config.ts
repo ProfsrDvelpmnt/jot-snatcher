@@ -15,34 +15,24 @@ export default defineConfig({
           copyFileSync('manifest.json', 'dist/manifest.json');
         }
         
-        // Copy icons folder
-        if (existsSync('JOT Snatcher/public/icons')) {
+        // Copy icons folder from archive
+        if (existsSync('archive/JOT Snatcher/public/icons')) {
           if (!existsSync('dist/icons')) {
             mkdirSync('dist/icons', { recursive: true });
           }
           const iconFiles = ['spjot-16.png', 'spjot-48.png', 'spjot-128.png'];
           iconFiles.forEach(icon => {
-            const srcPath = `JOT Snatcher/public/icons/${icon}`;
+            const srcPath = `archive/JOT Snatcher/public/icons/${icon}`;
             const destPath = `dist/icons/${icon}`;
             if (existsSync(srcPath)) {
               copyFileSync(srcPath, destPath);
+              console.log(`✅ Copied icon: ${icon}`);
+            } else {
+              console.log(`⚠️ Icon not found: ${srcPath}`);
             }
           });
-        }
-        
-        // Also try copying from the root icons folder if it exists
-        if (existsSync('icons')) {
-          if (!existsSync('dist/icons')) {
-            mkdirSync('dist/icons', { recursive: true });
-          }
-          const iconFiles = ['spjot-16.png', 'spjot-48.png', 'spjot-128.png'];
-          iconFiles.forEach(icon => {
-            const srcPath = `icons/${icon}`;
-            const destPath = `dist/icons/${icon}`;
-            if (existsSync(srcPath)) {
-              copyFileSync(srcPath, destPath);
-            }
-          });
+        } else {
+          console.log('⚠️ Icons directory not found in archive/JOT Snatcher/public/icons');
         }
       }
     },
