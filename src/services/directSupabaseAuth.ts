@@ -425,19 +425,38 @@ export class DirectSupabaseAuthService {
   }
 
   private setupPeriodicRefresh() {
-    // Refresh every 5 minutes
+    // Clear any existing interval first
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
+    
+    // Refresh every 5 minutes, but only if authenticated
     this.refreshInterval = setInterval(async () => {
-      if (this.authState.isAuthenticated) {
-        console.log('🔄 DirectSupabaseAuth: Periodic refresh...');
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          await this.loadUserData(session.user);
-        } else {
-          this.updateAuthState({
-            isAuthenticated: false,
-            requiresLogin: true,
-            lastUpdated: Date.now()
-          });
+      // Double-check authentication state before proceeding
+      if (!this.authState.isAuthenticated) {
+        console.log('🔄 DirectSupabaseAuth: Skipping periodic refresh - not authenticated');
+        return;
+      }
+      
+      console.log('🔄 DirectSupabaseAuth: Periodic refresh...');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await this.loadUserData(session.user);
+      } else {
+        console.log('🔄 DirectSupabaseAuth: No session found during refresh, signing out');
+        this.updateAuthState({
+          isAuthenticated: false,
+          requiresLogin: true,
+          userId: undefined,
+          userName: undefined,
+          userEmail: undefined,
+          subscriptionInfo: undefined,
+          lastUpdated: Date.now()
+        });
+        // Clear the interval since we're no longer authenticated
+        if (this.refreshInterval) {
+          clearInterval(this.refreshInterval);
+          this.refreshInterval = null;
         }
       }
     }, 5 * 60 * 1000);
@@ -524,6 +543,13 @@ export class DirectSupabaseAuthService {
     try {
       console.log('👋 DirectSupabaseAuth: Signing out...');
       
+      // Clear the periodic refresh interval immediately
+      if (this.refreshInterval) {
+        console.log('🔄 DirectSupabaseAuth: Clearing periodic refresh interval');
+        clearInterval(this.refreshInterval);
+        this.refreshInterval = null;
+      }
+      
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -536,25 +562,25 @@ export class DirectSupabaseAuthService {
 
       console.log('✅ DirectSupabaseAuth: Supabase sign out successful');
 
-      // The auth state change event should be triggered automatically by Supabase
-      // If it's not working, we'll force update the state
-      setTimeout(() => {
-        console.log('🔄 DirectSupabaseAuth: Checking if auth state was updated by Supabase...');
-        if (this.authState.isAuthenticated) {
-          console.log('⚠️ DirectSupabaseAuth: Auth state not updated by Supabase, forcing update...');
-          this.updateAuthState({
-            isAuthenticated: false,
-            requiresLogin: true,
-            userId: undefined,
-            userName: undefined,
-            userEmail: undefined,
-            subscriptionInfo: undefined,
-            lastUpdated: Date.now()
-          });
-        } else {
-          console.log('✅ DirectSupabaseAuth: Auth state already updated by Supabase');
-        }
-      }, 100);
+      // Immediately clear auth state - don't wait for Supabase event
+      console.log('🔄 DirectSupabaseAuth: Immediately clearing auth state');
+      this.updateAuthState({
+        isAuthenticated: false,
+        requiresLogin: true,
+        userId: undefined,
+        userName: undefined,
+        userEmail: undefined,
+        subscriptionInfo: undefined,
+        lastUpdated: Date.now()
+      });
+
+      // Clear any stored session data
+      try {
+        await chrome.storage.local.remove(['supabase_session', 'auth_state']);
+        console.log('✅ DirectSupabaseAuth: Cleared stored session data');
+      } catch (storageError) {
+        console.log('⚠️ DirectSupabaseAuth: Could not clear storage:', storageError);
+      }
 
       console.log('✅ DirectSupabaseAuth: Sign out successful');
       return { success: true };

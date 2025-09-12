@@ -74,38 +74,45 @@ export const IframeContent: React.FC = () => {
         userId: newAuthState.userId,
         subscriptionInfo: newAuthState.subscriptionInfo
       });
-      setAuthState(newAuthState);
       
-      // Update Supabase connection status
+      // Update local state
+      setAuthState(newAuthState);
       setIsSupabaseConnected(newAuthState.isAuthenticated);
       
-      // Send auth state to background script and content script for all state changes
-      console.log('📤 Iframe: Sending auth state to background script:', newAuthState);
-      
-      // Try direct chrome.runtime.sendMessage first
-      try {
-        chrome.runtime.sendMessage({
-          type: 'AUTH_STATE_UPDATE',
+      // Only send messages if this is a significant state change
+      // Avoid sending messages for every minor update to prevent loops
+      if (newAuthState.isAuthenticated !== authState.isAuthenticated || 
+          newAuthState.userId !== authState.userId) {
+        
+        console.log('📤 Iframe: Significant auth state change, sending updates');
+        
+        // Send to background script
+        try {
+          chrome.runtime.sendMessage({
+            type: 'AUTH_STATE_UPDATE',
+            authState: newAuthState
+          }).then((response) => {
+            if (response?.success) {
+              console.log('✅ Iframe: Auth state sent to background script successfully');
+            } else {
+              console.log('⚠️ Iframe: Failed to send auth state to background script');
+            }
+          }).catch((error) => {
+            console.error('❌ Iframe: Error sending auth state to background script:', error);
+          });
+        } catch (error) {
+          console.error('❌ Iframe: chrome.runtime.sendMessage not available:', error);
+        }
+        
+        // Send to content script for header updates
+        console.log('📤 Iframe: Sending auth state to content script for header update');
+        window.parent.postMessage({
+          type: 'IFRAME_AUTH_STATE_UPDATE',
           authState: newAuthState
-        }).then((response) => {
-          if (response?.success) {
-            console.log('✅ Iframe: Auth state sent to background script successfully');
-          } else {
-            console.log('⚠️ Iframe: Failed to send auth state to background script');
-          }
-        }).catch((error) => {
-          console.error('❌ Iframe: Error sending auth state to background script:', error);
-        });
-      } catch (error) {
-        console.error('❌ Iframe: chrome.runtime.sendMessage not available:', error);
+        }, '*');
+      } else {
+        console.log('📊 Iframe: Minor auth state change, skipping message sending to prevent loops');
       }
-      
-      // Always send to content script via window.postMessage for header updates
-      console.log('📤 Iframe: Sending auth state to content script for header update');
-      window.parent.postMessage({
-        type: 'IFRAME_AUTH_STATE_UPDATE',
-        authState: newAuthState
-      }, '*');
     });
 
     window.addEventListener('message', handleMessage);

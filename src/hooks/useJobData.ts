@@ -151,15 +151,39 @@ export const useJobData = () => {
   useEffect(() => {
     const unsubscribe = supabaseAuth.addAuthStateListener((authState) => {
       console.log('🔄 Auth state changed:', authState);
-      setIsConnected(authState.isAuthenticated);
-      setIsAuthenticated(authState.isAuthenticated);
-      setRequiresLogin(authState.requiresLogin);
-      setUserName(authState.userName || null);
-      setUserId(authState.userId || null);
+      
+      // Only update state if there's a significant change to prevent loops
+      const currentAuth = isAuthenticated;
+      const currentUserId = userId;
+      
+      if (authState.isAuthenticated !== currentAuth || authState.userId !== currentUserId) {
+        console.log('📊 Iframe: Updating usage data from auth state:', authState.subscriptionInfo);
+        setIsConnected(authState.isAuthenticated);
+        setIsAuthenticated(authState.isAuthenticated);
+        setRequiresLogin(authState.requiresLogin);
+        setUserName(authState.userName || null);
+        setUserId(authState.userId || null);
+        
+        // Update usage data if authenticated
+        if (authState.isAuthenticated && authState.subscriptionInfo) {
+          // Convert subscription info to UsageData format
+          const usageData = {
+            currentMonth: authState.subscriptionInfo.currentUsage || 0,
+            monthlyLimit: authState.subscriptionInfo.monthlyLimit || 0,
+            remainingUses: authState.subscriptionInfo.remainingUses || 0,
+            tier: authState.subscriptionInfo.tier || 'free',
+            isActive: authState.subscriptionInfo.isActive || false
+          };
+          setUsageData(usageData);
+        } else {
+          console.log('📊 Iframe: Clearing usage data - user not authenticated');
+          setUsageData(null);
+        }
+      }
     });
 
     return unsubscribe;
-  }, []);
+  }, [isAuthenticated, userId]);
 
   const collectJobData = async () => {
     if (!isAuthenticated) {
