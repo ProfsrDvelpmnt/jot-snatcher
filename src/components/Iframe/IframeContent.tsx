@@ -162,28 +162,26 @@ export const IframeContent: React.FC = () => {
       
       if (result.success) {
         console.log('✅ Iframe: Sign out successful');
-        // The auth state listener will handle the state update automatically
-        // No need to manually update state here
         
-        // Wait a bit and check if the state was updated
-        setTimeout(() => {
-          console.log('🔍 Iframe: Auth state after sign out (delayed check):', authState);
-          console.log('🔍 Iframe: Supabase connection status after sign out:', isSupabaseConnected);
-          
-          // Force update the auth state if it wasn't updated by the listener
-          if (authState.isAuthenticated) {
-            console.log('⚠️ Iframe: Auth state not updated by listener, forcing update...');
-            setAuthState({
-              isAuthenticated: false,
-              requiresLogin: true,
-              userId: undefined,
-              userName: undefined,
-              userEmail: undefined,
-              subscriptionInfo: undefined,
-              lastUpdated: Date.now()
-            });
-          }
-        }, 500);
+        // Immediately clear all states - don't wait for listeners
+        console.log('🔄 Iframe: Immediately clearing all states');
+        setAuthState({
+          isAuthenticated: false,
+          requiresLogin: true,
+          userId: undefined,
+          userName: undefined,
+          userEmail: undefined,
+          subscriptionInfo: undefined,
+          lastUpdated: Date.now()
+        });
+        
+        // Clear webapp connection status
+        setIsWebappConnected(false);
+        
+        // Clear Supabase connection status
+        setIsSupabaseConnected(false);
+        
+        console.log('✅ Iframe: All states cleared immediately');
       } else {
         console.error('❌ Iframe: Sign out failed:', result.error);
       }
