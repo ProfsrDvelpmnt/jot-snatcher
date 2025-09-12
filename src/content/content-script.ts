@@ -186,9 +186,11 @@ const stopDrag = (iframe: HTMLElement) => {
 };
 
 // Update iframe header with user information
-async function updateIframeHeader(userName: string | null, userEmail: string | null, isSupabaseConnected: boolean = false) {
-  console.log('🔍 Content script: updateIframeHeader called with:', { userName, userEmail, isSupabaseConnected });
+async function updateIframeHeader(userName: string | null, userEmail: string | null, isWebappLoggedIn: boolean = false) {
+  console.log('🔍 Content script: updateIframeHeader called with:', { userName, userEmail, isWebappLoggedIn });
   
+  // Check Supabase connection status
+  const isSupabaseConnected = await checkSupabaseConnection();
   console.log('🔍 Supabase connection status:', isSupabaseConnected);
   
   const iframe = document.getElementById('jot-snatcher-iframe');
@@ -236,9 +238,8 @@ async function updateIframeHeader(userName: string | null, userEmail: string | n
   console.log('🔍 Content script: Found title section, updating...');
   
   // Always create the userName element, even if empty
-  // SP-JOT status now mirrors Supabase connection status
-  const webappStatus = isSupabaseConnected ? 'Connected to SP-JOT' : 'Not Connected to SP-JOT';
-  const webappColor = isSupabaseConnected ? 'rgba(34, 197, 94, 0.9)' : 'rgba(239, 68, 68, 0.9)';
+  const webappStatus = isWebappLoggedIn ? 'Connected to SP-JOT' : 'Not Connected to SP-JOT';
+  const webappColor = isWebappLoggedIn ? 'rgba(34, 197, 94, 0.9)' : 'rgba(239, 68, 68, 0.9)';
   const supabaseStatus = isSupabaseConnected ? 'Supabase Connected' : 'Supabase Disconnected';
   const supabaseColor = isSupabaseConnected ? 'rgba(34, 197, 94, 0.9)' : 'rgba(239, 68, 68, 0.9)';
   
@@ -1081,8 +1082,6 @@ function initializeFloatingButton() {
   }
 }
 
-// Webapp token check removed - no longer needed
-// All connection status now based on actual Supabase authentication
 
 // Check Supabase connection status
 async function checkSupabaseConnection(): Promise<boolean> {
@@ -1420,19 +1419,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 window.addEventListener('message', async (event) => {
   if (event.data.type === 'CLOSE_IFRAME') {
     closeIframePanel();
-  } else if (event.data.type === 'CHECK_API_CONNECTION') {
-    console.log('📨 Content script: Received API connection check from iframe');
-    const isConnected = await checkSupabaseConnection();
-    console.log('🔍 Content script: API connection status:', isConnected);
-    
-    // Send response back to iframe
-    const iframe = document.getElementById('jot-snatcher-iframe') as HTMLIFrameElement;
-    if (iframe && iframe.contentWindow) {
-      iframe.contentWindow.postMessage({
-        type: 'API_CONNECTION_RESPONSE',
-        isConnected: isConnected
-      }, '*');
-    }
   } else if (event.data.type === 'IFRAME_AUTH_STATE_UPDATE') {
     console.log('📨 Content script: Received auth state update from iframe:', event.data.authState);
     
@@ -1441,24 +1427,22 @@ window.addEventListener('message', async (event) => {
       console.log('🔍 Content script: Updating iframe header from iframe auth state:', event.data.authState.userName);
       // Only update the header if we have valid user data
       if (event.data.authState.userName && event.data.authState.userEmail) {
-        // Use Supabase connection status for both indicators
-        const isSupabaseConnected = await checkSupabaseConnection();
-        await updateIframeHeader(event.data.authState.userName, event.data.authState.userEmail, isSupabaseConnected);
+        await updateIframeHeader(event.data.authState.userName, event.data.authState.userEmail, false);
         updateIframeHeaderUserName(event.data.authState.userName, event.data.authState.userEmail);
         updateIframeSignOutButton(true);
         
-        // Send webapp connection status update to iframe - now based on Supabase status
+        // Send webapp connection status update to iframe
         const iframe = document.getElementById('jot-snatcher-iframe') as HTMLIFrameElement;
         if (iframe && iframe.contentWindow) {
           iframe.contentWindow.postMessage({
             type: 'WEBAPP_CONNECTION_UPDATE',
-            isWebappConnected: isSupabaseConnected
+            isWebappConnected: false
           }, '*');
         }
       }
     } else {
       console.log('🔍 Content script: Clearing iframe header from iframe auth state');
-      // When extension user is not authenticated, clear all indicators
+      // When extension user is not authenticated, don't show webapp as connected
       await updateIframeHeader(null, null, false);
       updateIframeHeaderUserName(null, null);
       updateIframeSignOutButton(false);
