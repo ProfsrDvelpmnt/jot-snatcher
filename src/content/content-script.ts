@@ -1431,14 +1431,6 @@ window.addEventListener('message', async (event) => {
         updateIframeHeaderUserName(event.data.authState.userName, event.data.authState.userEmail);
         updateIframeSignOutButton(true);
         
-        // Send webapp connection status update to iframe
-        const iframe = document.getElementById('jot-snatcher-iframe') as HTMLIFrameElement;
-        if (iframe && iframe.contentWindow) {
-          iframe.contentWindow.postMessage({
-            type: 'WEBAPP_CONNECTION_UPDATE',
-            isWebappConnected: false
-          }, '*');
-        }
       }
     } else {
       console.log('🔍 Content script: Clearing iframe header from iframe auth state');
@@ -1447,14 +1439,6 @@ window.addEventListener('message', async (event) => {
       updateIframeHeaderUserName(null, null);
       updateIframeSignOutButton(false);
       
-      // Send webapp connection status update to iframe - force false when extension user is not authenticated
-      const iframe = document.getElementById('jot-snatcher-iframe') as HTMLIFrameElement;
-      if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage({
-          type: 'WEBAPP_CONNECTION_UPDATE',
-          isWebappConnected: false
-        }, '*');
-      }
     }
   }
 });

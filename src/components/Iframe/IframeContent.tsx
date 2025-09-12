@@ -32,9 +32,6 @@ export const IframeContent: React.FC = () => {
     return initialState;
   });
 
-  // Webapp connection status
-  const [isWebappConnected, setIsWebappConnected] = useState(false);
-  
   // Supabase connection status
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
 
@@ -57,9 +54,6 @@ export const IframeContent: React.FC = () => {
         console.log('📨 Iframe: Received sign out message from content script');
         console.log('🔄 Iframe: Calling handleSignOut...');
         handleSignOut();
-      } else if (event.data.type === 'WEBAPP_CONNECTION_UPDATE') {
-        console.log('📨 Iframe: Received webapp connection update:', event.data.isWebappConnected);
-        setIsWebappConnected(event.data.isWebappConnected);
       }
     };
 
@@ -175,9 +169,6 @@ export const IframeContent: React.FC = () => {
           lastUpdated: Date.now()
         });
         
-        // Clear webapp connection status
-        setIsWebappConnected(false);
-        
         // Clear Supabase connection status
         setIsSupabaseConnected(false);
         
@@ -232,8 +223,8 @@ export const IframeContent: React.FC = () => {
           />
           
           <StatusBar
-            isConnected={isWebappConnected}
-            statusText={isWebappConnected ? "Connected to SP-JOT" : "Not Connected to SP-JOT"}
+            isConnected={isSupabaseConnected}
+            statusText={isSupabaseConnected ? "Connected to SP-JOT" : "Not Connected to SP-JOT"}
             isSupabaseConnected={isSupabaseConnected}
             supabaseStatusText={isSupabaseConnected ? "Supabase Connected" : "Supabase Disconnected"}
           />
