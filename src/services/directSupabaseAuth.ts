@@ -654,7 +654,31 @@ export class DirectSupabaseAuthService {
     try {
       console.log('🔍 DirectSupabaseAuth: Testing Supabase connection...');
       
-      // Test basic connection by getting current session
+      // First check if we have a valid auth state
+      if (this.authState.isAuthenticated && this.authState.userId) {
+        console.log('✅ DirectSupabaseAuth: User is authenticated via auth state');
+        
+        // Test a simple query to verify database connectivity
+        try {
+          const { data, error: queryError } = await supabase
+            .from('profiles')
+            .select('id')
+            .limit(1);
+          
+          if (queryError) {
+            console.error('❌ DirectSupabaseAuth: Query test failed:', queryError);
+            return false;
+          }
+          
+          console.log('✅ DirectSupabaseAuth: Connection test successful');
+          return true;
+        } catch (queryError) {
+          console.error('❌ DirectSupabaseAuth: Query test error:', queryError);
+          return false;
+        }
+      }
+      
+      // If no auth state, try to get session
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) {
@@ -665,12 +689,6 @@ export class DirectSupabaseAuthService {
       // Check if we have a valid session
       if (!session?.user) {
         console.log('⚠️ DirectSupabaseAuth: No auth token found');
-        // Debug: Check what's in Chrome storage
-        chrome.storage.local.get(null, (items) => {
-          console.log('🔍 DirectSupabaseAuth: Chrome storage contents:', Object.keys(items));
-          const authKeys = Object.keys(items).filter(key => key.includes('auth') || key.includes('supabase'));
-          console.log('🔍 DirectSupabaseAuth: Auth-related keys:', authKeys);
-        });
         return false;
       }
       

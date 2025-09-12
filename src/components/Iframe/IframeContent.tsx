@@ -75,9 +75,15 @@ export const IframeContent: React.FC = () => {
         subscriptionInfo: newAuthState.subscriptionInfo
       });
       
-      // Update local state
-      setAuthState(newAuthState);
-      setIsSupabaseConnected(newAuthState.isAuthenticated);
+      // Only update state if we're not in a sign-out state
+      // This prevents the listener from overriding the sign-out state
+      if (!authState.requiresLogin || newAuthState.isAuthenticated) {
+        console.log('📊 Iframe: Updating auth state from listener');
+        setAuthState(newAuthState);
+        setIsSupabaseConnected(newAuthState.isAuthenticated);
+      } else {
+        console.log('📊 Iframe: Skipping auth state update - user is signed out');
+      }
       
       // Only send messages if this is a significant state change
       // Avoid sending messages for every minor update to prevent loops
@@ -157,31 +163,32 @@ export const IframeContent: React.FC = () => {
       console.log('🔍 Iframe: Current auth state before sign out:', authState);
       console.log('🔍 Iframe: Current Supabase connection status:', isSupabaseConnected);
       
+      // Immediately clear all states first - don't wait for Supabase sign out
+      console.log('🔄 Iframe: Immediately clearing all states');
+      setAuthState({
+        isAuthenticated: false,
+        requiresLogin: true,
+        userId: undefined,
+        userName: undefined,
+        userEmail: undefined,
+        subscriptionInfo: undefined,
+        lastUpdated: Date.now()
+      });
+      
+      // Clear webapp connection status
+      setIsWebappConnected(false);
+      
+      // Clear Supabase connection status
+      setIsSupabaseConnected(false);
+      
+      console.log('✅ Iframe: All states cleared immediately');
+      
+      // Then call Supabase sign out
       const result = await supabaseAuth.signOut();
       console.log('🔍 Iframe: Sign out result:', result);
       
       if (result.success) {
         console.log('✅ Iframe: Sign out successful');
-        
-        // Immediately clear all states - don't wait for listeners
-        console.log('🔄 Iframe: Immediately clearing all states');
-        setAuthState({
-          isAuthenticated: false,
-          requiresLogin: true,
-          userId: undefined,
-          userName: undefined,
-          userEmail: undefined,
-          subscriptionInfo: undefined,
-          lastUpdated: Date.now()
-        });
-        
-        // Clear webapp connection status
-        setIsWebappConnected(false);
-        
-        // Clear Supabase connection status
-        setIsSupabaseConnected(false);
-        
-        console.log('✅ Iframe: All states cleared immediately');
       } else {
         console.error('❌ Iframe: Sign out failed:', result.error);
       }

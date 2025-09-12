@@ -537,14 +537,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         try {
           console.log('🔍 Background: Extracting job data...');
           
-          const authState = supabaseAuth.getAuthState();
-          if (!authState.isAuthenticated || !authState.userId) {
-            sendResponse({
-              success: false,
-              error: 'User not authenticated'
-            });
-            return;
-          }
+          // Always extract job data regardless of authentication status
+          // Authentication will be checked when trying to send data or generate PDF
           
           // For now, just return success - actual job extraction would happen here
           sendResponse({
