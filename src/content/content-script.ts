@@ -1420,6 +1420,19 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 window.addEventListener('message', async (event) => {
   if (event.data.type === 'CLOSE_IFRAME') {
     closeIframePanel();
+  } else if (event.data.type === 'CHECK_API_CONNECTION') {
+    console.log('📨 Content script: Received API connection check from iframe');
+    const isConnected = await checkSupabaseConnection();
+    console.log('🔍 Content script: API connection status:', isConnected);
+    
+    // Send response back to iframe
+    const iframe = document.getElementById('jot-snatcher-iframe') as HTMLIFrameElement;
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage({
+        type: 'API_CONNECTION_RESPONSE',
+        isConnected: isConnected
+      }, '*');
+    }
   } else if (event.data.type === 'IFRAME_AUTH_STATE_UPDATE') {
     console.log('📨 Content script: Received auth state update from iframe:', event.data.authState);
     

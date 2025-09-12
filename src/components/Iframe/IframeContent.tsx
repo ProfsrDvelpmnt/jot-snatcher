@@ -35,6 +35,36 @@ export const IframeContent: React.FC = () => {
   // Supabase connection status (now used for both indicators)
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
 
+  // Check actual API connection
+  const checkApiConnection = async (): Promise<boolean> => {
+    try {
+      // Send message to content script to check connection
+      const response = await new Promise((resolve) => {
+        window.parent.postMessage({ type: 'CHECK_API_CONNECTION' }, '*');
+        
+        // Listen for response
+        const handleResponse = (event: MessageEvent) => {
+          if (event.data.type === 'API_CONNECTION_RESPONSE') {
+            window.removeEventListener('message', handleResponse);
+            resolve(event.data.isConnected);
+          }
+        };
+        window.addEventListener('message', handleResponse);
+        
+        // Timeout after 5 seconds
+        setTimeout(() => {
+          window.removeEventListener('message', handleResponse);
+          resolve(false);
+        }, 5000);
+      });
+      
+      return response as boolean;
+    } catch (error) {
+      console.error('❌ Error checking API connection:', error);
+      return false;
+    }
+  };
+
   // Listen for theme changes and authentication data from content script
   React.useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -76,7 +106,16 @@ export const IframeContent: React.FC = () => {
       
       // Update local state
       setAuthState(newAuthState);
-      setIsSupabaseConnected(newAuthState.isAuthenticated);
+      
+      // Only set Supabase connection status to true if user is authenticated AND we can verify API connection
+      if (newAuthState.isAuthenticated) {
+        // Check actual API connection before showing as connected
+        checkApiConnection().then((isConnected) => {
+          setIsSupabaseConnected(isConnected);
+        });
+      } else {
+        setIsSupabaseConnected(false);
+      }
       
       // Only send messages if this is a significant state change
       // Avoid sending messages for every minor update to prevent loops
