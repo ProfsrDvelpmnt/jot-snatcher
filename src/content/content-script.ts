@@ -88,14 +88,14 @@ if (typeof window !== 'undefined') {
   try {
     (window as any).JOTDebugger = ExtractorDebugger;
     (window as any).testExtraction = () => ExtractorDebugger.testAllExtractors();
-    (window as any).debugCurrentSite = () => {
+    (window as any).debugCurrentSite = async () => {
       const site = window.location.hostname.toLowerCase();
-      if (site.includes('linkedin')) return ExtractorDebugger.debugExtraction('linkedin');
-      if (site.includes('monster')) return ExtractorDebugger.debugExtraction('monster');
-      if (site.includes('ziprecruiter')) return ExtractorDebugger.debugExtraction('ziprecruiter');
-      if (site.includes('greenhouse')) return ExtractorDebugger.debugExtraction('greenhouse');
-      if (site.includes('hiring.cafe')) return ExtractorDebugger.debugExtraction('hiring-cafe');
-      if (site.includes('indeed')) return ExtractorDebugger.debugExtraction('indeed');
+      if (site.includes('linkedin')) return await ExtractorDebugger.debugExtraction('linkedin');
+      if (site.includes('monster')) return await ExtractorDebugger.debugExtraction('monster');
+      if (site.includes('ziprecruiter')) return await ExtractorDebugger.debugExtraction('ziprecruiter');
+      if (site.includes('greenhouse')) return await ExtractorDebugger.debugExtraction('greenhouse');
+      if (site.includes('hiring.cafe')) return await ExtractorDebugger.debugExtraction('hiring-cafe');
+      if (site.includes('indeed')) return await ExtractorDebugger.debugExtraction('indeed');
       console.log('No supported site detected');
       return null;
     };
@@ -242,14 +242,10 @@ async function updateIframeHeader(userName: string | null, userEmail: string | n
   const supabaseColor = isSupabaseConnected ? 'rgba(34, 197, 94, 0.9)' : 'rgba(239, 68, 68, 0.9)';
   
   title.innerHTML = `
-    <img src="${chrome.runtime.getURL('icons/spjot-48.png')}" style="width: 40px; height: 40px;" alt="JOT">
-    <div style="display: flex; flex-direction: column; align-items: flex-start;">
-      <span style="font-size: 28px; font-weight: bold; line-height: 1.2;">JOT Snatcher</span>
-      <span style="font-size: 16px; opacity: 0.9; line-height: 1.3; margin-top: 4px;">
-        <span id="jot-snatcher-webapp-status" style="color: ${webappColor}; font-weight: 600;">${webappStatus}</span>
-        <span id="jot-snatcher-supabase-status" style="color: ${supabaseColor}; font-weight: 600; margin-left: 12px;">• ${supabaseStatus}</span>
-        <span id="jot-snatcher-username" style="margin-left: 12px; font-weight: 500;"></span>
-      </span>
+    <img src="${chrome.runtime.getURL('icons/spjot-48.png')}" style="width: 48px; height: 48px; flex-shrink: 0; margin-top: -6px;" alt="JOT">
+    <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 0;">
+      <span style="font-size: 28px; font-weight: 900; line-height: 1.1; margin-bottom: 4px;">Snatcher</span>
+      <span style="font-size: 16px; opacity: 0.9; line-height: 1.2; font-weight: 400;">Collects Jobs For <span id="jot-snatcher-webapp-status" style="display: none;">${webappStatus}</span><span id="jot-snatcher-supabase-status" style="display: none;">${supabaseStatus}</span><span id="jot-snatcher-username" style="font-weight: 600; color: rgba(255, 255, 255, 0.95);"></span></span>
     </div>
   `;
   
@@ -257,7 +253,7 @@ async function updateIframeHeader(userName: string | null, userEmail: string | n
   if (userName && userEmail) {
     const userNameElement = title.querySelector('#jot-snatcher-username') as HTMLElement;
     if (userNameElement) {
-      userNameElement.textContent = `• ${userName}`;
+      userNameElement.textContent = userName;
       userNameElement.style.color = 'rgba(255, 255, 255, 0.9)';
       console.log('✅ Content script: Updated iframe header with user name:', userName);
     }
@@ -291,7 +287,7 @@ function updateIframeHeaderUserName(userName: string | null, userEmail: string |
   }
   
   if (userName && userEmail) {
-    userNameElement.textContent = `• ${userName}`;
+    userNameElement.textContent = userName;
     userNameElement.style.color = 'rgba(255, 255, 255, 0.9)';
     console.log('✅ Content script: Updated iframe header userName element:', userName);
   } else {
@@ -370,54 +366,62 @@ function openIframePanel() {
   header.style.cssText = `
     background: #ba745f;
     color: white;
-    padding: 16px 20px;
+    padding: 20px 24px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    min-height: 80px;
+    min-height: 100px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   `;
 
   const title = document.createElement('div');
   title.style.cssText = `
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 16px;
     font-weight: bold;
-    font-size: 24px;
+    flex: 1;
+    min-width: 0;
   `;
   title.innerHTML = `
-    <img src="${chrome.runtime.getURL('icons/spjot-48.png')}" style="width: 32px; height: 32px;" alt="JOT">
-    <div style="display: flex; flex-direction: column; align-items: flex-start;">
-      <span style="font-size: 24px; font-weight: bold; line-height: 1.2;">JOT Snatcher</span>
-      <span style="font-size: 14px; opacity: 0.8; line-height: 1.2;">Collects Jobs <span id="jot-snatcher-username" style="margin-left: 8px;"></span></span>
+    <img src="${chrome.runtime.getURL('icons/spjot-48.png')}" style="width: 48px; height: 48px; flex-shrink: 0; margin-top: -6px;" alt="JOT">
+    <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 0;">
+      <span style="font-size: 28px; font-weight: 900; line-height: 1.1; margin-bottom: 4px;">Snatcher</span>
+      <span style="font-size: 16px; opacity: 0.9; line-height: 1.2; font-weight: 400;">Collects Jobs For <span id="jot-snatcher-username" style="font-weight: 600; color: rgba(255, 255, 255, 0.95);"></span></span>
     </div>
   `;
 
   const controls = document.createElement('div');
   controls.style.cssText = `
     display: flex;
-    gap: 8px;
-    align-items: center;
+    gap: 12px;
+    align-items: flex-start;
+    flex-shrink: 0;
+    margin-left: 20px;
+    padding-top: 6px;
+    margin-top: -8px;
   `;
 
   // Fullscreen toggle button
   const fullscreenBtn = document.createElement('button');
   fullscreenBtn.innerHTML = '⛶';
   fullscreenBtn.style.cssText = `
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     border: none;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
     color: white;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: bold;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
   `;
   fullscreenBtn.onmouseenter = () => {
     fullscreenBtn.style.background = 'rgba(255, 255, 255, 0.3)';
@@ -468,19 +472,21 @@ function openIframePanel() {
   const minimizeBtn = document.createElement('button');
   minimizeBtn.innerHTML = '⤢';
   minimizeBtn.style.cssText = `
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     border: none;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
     color: white;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: bold;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
   `;
   minimizeBtn.onmouseenter = () => {
     minimizeBtn.style.background = 'rgba(255, 255, 255, 0.3)';
@@ -493,16 +499,19 @@ function openIframePanel() {
   minimizeBtn.onclick = () => {
     const isMinimized = iframeContainer.style.height === '60px';
     if (isMinimized) {
-      // Expand
-      iframeContainer.style.height = '800px';
-      iframeContainer.style.maxHeight = '85vh';
-      minimizeBtn.innerHTML = '⤢';
+      // Expand to full viewport height
+      const fullHeight = window.innerHeight + 'px';
+      iframeContainer.style.height = fullHeight;
+      iframeContainer.style.maxHeight = fullHeight;
+      // Ensure it's at the top
+      iframeContainer.style.top = '0px';
+      minimizeBtn.innerHTML = '⤡';
       minimizeBtn.title = 'Minimize';
     } else {
       // Minimize
       iframeContainer.style.height = '60px';
       iframeContainer.style.maxHeight = '60px';
-      minimizeBtn.innerHTML = '⤡';
+      minimizeBtn.innerHTML = '⤢';
       minimizeBtn.title = 'Expand';
     }
   };
@@ -512,19 +521,21 @@ function openIframePanel() {
   const closeBtn = document.createElement('button');
   closeBtn.innerHTML = '×';
   closeBtn.style.cssText = `
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     border: none;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
     color: white;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: bold;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
   `;
   closeBtn.onmouseenter = () => {
     closeBtn.style.background = 'rgba(255, 0, 0, 0.3)';
@@ -591,27 +602,30 @@ function openIframePanel() {
   // Theme selector
   const themeSelect = document.createElement('select');
   themeSelect.style.cssText = `
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: #ba745f !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
     border-radius: 6px;
     padding: 4px 8px;
     font-size: 12px;
     font-weight: bold;
     cursor: pointer;
     min-width: 80px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
   `;
   
   // Add theme options
   const lightOption = document.createElement('option');
   lightOption.value = 'light';
   lightOption.textContent = 'Light';
-  lightOption.style.cssText = 'background: #f3f4f6; color: #1f2937;';
+  lightOption.style.cssText = 'background: #f4e6e0; color: #8b4513; font-weight: 600;';
   
   const darkOption = document.createElement('option');
   darkOption.value = 'dark';
   darkOption.textContent = 'Dark';
-  darkOption.style.cssText = 'background: #1f2937; color: #f3f4f6;';
+  darkOption.style.cssText = 'background: #8b4513; color: #f4e6e0; font-weight: 600;';
   
   themeSelect.appendChild(lightOption);
   themeSelect.appendChild(darkOption);
@@ -703,7 +717,7 @@ function openIframePanel() {
         // Update iframe header with real user data
         const isWebappLoggedIn = await checkWebappLogin();
         await updateIframeHeader(supabaseAuthData.userName || null, supabaseAuthData.userEmail || null, isWebappLoggedIn);
-        updateIframeSignOutButton(true);
+        // updateIframeSignOutButton(true); // Hidden - users can sign out via SignOutPanel
         
         if (iframe.contentWindow) {
           iframe.contentWindow.postMessage({ 
@@ -723,7 +737,7 @@ function openIframePanel() {
         
         // Initialize iframe header with default state
         await updateIframeHeader(null, null, false);
-        updateIframeSignOutButton(false);
+        // updateIframeSignOutButton(false); // Hidden - users can sign out via SignOutPanel
         
         if (iframe.contentWindow) {
           iframe.contentWindow.postMessage({ 
@@ -767,7 +781,7 @@ function openIframePanel() {
         // Update iframe header with user name
         const isWebappLoggedIn = await checkWebappLogin();
         await updateIframeHeader(supabaseAuthData.userName || null, supabaseAuthData.userEmail || null, isWebappLoggedIn);
-        updateIframeSignOutButton(true);
+        // updateIframeSignOutButton(true); // Hidden - users can sign out via SignOutPanel
         
         if (iframe.contentWindow) {
           iframe.contentWindow.postMessage({ 
@@ -785,7 +799,7 @@ function openIframePanel() {
       } else {
         // Clear iframe header if no auth data
         await updateIframeHeader(null, null, false);
-        updateIframeSignOutButton(false);
+        // updateIframeSignOutButton(false); // Hidden - users can sign out via SignOutPanel
       }
     }, 10000); // Update every 10 seconds
     
@@ -1817,7 +1831,7 @@ window.addEventListener('message', async (event) => {
       if (event.data.authState.userName && event.data.authState.userEmail) {
         await updateIframeHeader(event.data.authState.userName, event.data.authState.userEmail, false);
         updateIframeHeaderUserName(event.data.authState.userName, event.data.authState.userEmail);
-        updateIframeSignOutButton(true);
+        // updateIframeSignOutButton(true); // Hidden - users can sign out via SignOutPanel
         
         // Check webapp connection status and send update to iframe
         const iframe = document.getElementById('jot-snatcher-iframe') as HTMLIFrameElement;
@@ -1835,7 +1849,7 @@ window.addEventListener('message', async (event) => {
       // When extension user is not authenticated, don't show webapp as connected
       await updateIframeHeader(null, null, false);
       updateIframeHeaderUserName(null, null);
-      updateIframeSignOutButton(false);
+      // updateIframeSignOutButton(false); // Hidden - users can sign out via SignOutPanel
       
       // When extension user is not authenticated, don't show webapp as connected
       const iframe = document.getElementById('jot-snatcher-iframe') as HTMLIFrameElement;
