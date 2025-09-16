@@ -139,7 +139,7 @@ export const JobDetails: React.FC<JobDetailsProps> = ({
         </button>
         <button
           onClick={onSend}
-          disabled={!jobData}
+          disabled={!jobData || isLoading}
           className="flex-1 bg-muted-purple dark:bg-rose-gold hover:bg-rose-gold dark:hover:bg-rose-gold/90 disabled:bg-muted-purple/50 dark:disabled:bg-rose-gold/50 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 hover:shadow-lg disabled:cursor-not-allowed flex items-center justify-center"
         >
           <svg className="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">

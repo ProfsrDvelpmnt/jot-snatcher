@@ -51,20 +51,23 @@ export const UsageStatus: React.FC<UsageStatusProps> = ({ usageData, onRefresh }
 
   return (
     <div 
-      className={`flex items-center justify-between px-3 py-2 rounded-lg border text-sm font-medium flex-1 min-w-0 ${colorInfo.bgColor} ${colorInfo.textColor} ${colorInfo.borderColor}`}
+      className={`flex items-center justify-between px-2 py-1.5 rounded-lg border text-xs font-medium flex-1 min-w-0 gap-1.5 ${colorInfo.bgColor} ${colorInfo.textColor} ${colorInfo.borderColor}`}
       title={`Usage: ${currentUsage}/${monthlyLimit} (${remainingUses} remaining)${tier ? ` | Plan: ${tier}` : ''}`}
     >
-      <span className="flex items-center gap-1.5 min-w-0 flex-1">
-        <span className="text-xs flex-shrink-0">{colorInfo.icon}</span>
-        <span className="text-center whitespace-normal leading-tight px-1 py-0.5 min-w-[80px]">USAGE: {currentUsage}/{monthlyLimit}{warningIcon}</span>
-      </span>
+      <div className="flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1">
+        <div className="flex items-center justify-center gap-1">
+          <span className="text-xs flex-shrink-0">{colorInfo.icon}</span>
+          <span className="text-center">USAGE:</span>
+        </div>
+        <span className="text-center text-xs">{currentUsage}/{monthlyLimit}{warningIcon}</span>
+      </div>
       {onRefresh && (
         <button
           onClick={onRefresh}
-          className="w-6 h-6 bg-blue-500 hover:bg-blue-600 text-white rounded-md flex items-center justify-center transition-colors duration-200 flex-shrink-0"
+          className="w-5 h-5 bg-blue-500 hover:bg-blue-600 text-white rounded flex items-center justify-center transition-colors duration-200 flex-shrink-0"
           title="Refresh Usage"
         >
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
         </button>

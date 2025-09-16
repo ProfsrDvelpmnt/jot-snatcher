@@ -253,7 +253,26 @@ export const useJobData = () => {
       return;
     }
 
+    if (isLoading) {
+      console.log('⚠️ Job submission already in progress');
+      return;
+    }
+
     setIsLoading(true);
+    
+    // 1. Optimistic update - immediately increment counter
+    setUsageData(prev => {
+      if (prev) {
+        console.log('📈 Optimistic update: incrementing usage counter');
+        return {
+          ...prev,
+          currentMonth: (prev.currentMonth || 0) + 1,
+          remainingUses: prev.remainingUses ? Math.max(0, prev.remainingUses - 1) : prev.remainingUses
+        };
+      }
+      return prev;
+    });
+
     try {
       console.log('📤 Sending job data...');
       const result = await chrome.runtime.sendMessage({ 
@@ -265,25 +284,62 @@ export const useJobData = () => {
         console.log('✅ Job data sent successfully');
         // Clear job data after successful send
         setJobData(null);
-        // Force refresh of auth state to get updated usage data
-        await chrome.runtime.sendMessage({ type: 'CHECK_CONNECTION' });
-        // Wait a moment for database to be updated, then refresh usage data
-        setTimeout(async () => {
-          await refreshUsageData();
-        }, 1000);
-        // Show success message
+        
+        // Show success message immediately
         setSuccessMessage('🎉 Job submitted successfully! Form cleared and usage updated.');
         // Clear success message after 8 seconds (longer for popup)
         setTimeout(() => setSuccessMessage(null), 8000);
         console.log('🎉 Job submitted successfully! Form cleared and usage updated.');
+        
+        // Sync with server after delay to ensure database is updated
+        setTimeout(async () => {
+          try {
+            console.log('🔄 Syncing usage data with server...');
+            await refreshUsageData();
+            console.log('✅ Usage data synced with server');
+          } catch (error) {
+            console.error('⚠️ Failed to sync usage data, but job was submitted successfully:', error);
+            // Don't rollback - job was successfully submitted, just sync failed
+          }
+        }, 1000);
       } else {
         console.log('❌ Failed to send job data:', result.error);
+        
+        // Rollback optimistic update on failure
+        setUsageData(prev => {
+          if (prev) {
+            console.log('🔄 Rolling back optimistic update due to failure');
+            return {
+              ...prev,
+              currentMonth: Math.max(0, (prev.currentMonth || 0) - 1),
+              remainingUses: prev.remainingUses ? (prev.remainingUses + 1) : prev.remainingUses
+            };
+          }
+          return prev;
+        });
+        
         setSuccessMessage(`❌ Failed to submit job: ${result.error}`);
         // Clear error message after 8 seconds (longer for popup)
         setTimeout(() => setSuccessMessage(null), 8000);
       }
     } catch (error) {
       console.error('❌ Error sending job data:', error);
+      
+      // Rollback optimistic update on error
+      setUsageData(prev => {
+        if (prev) {
+          console.log('🔄 Rolling back optimistic update due to error');
+          return {
+            ...prev,
+            currentMonth: Math.max(0, (prev.currentMonth || 0) - 1),
+            remainingUses: prev.remainingUses ? (prev.remainingUses + 1) : prev.remainingUses
+          };
+        }
+        return prev;
+      });
+      
+      setSuccessMessage('❌ Error submitting job. Please try again.');
+      setTimeout(() => setSuccessMessage(null), 8000);
     } finally {
       setIsLoading(false);
     }
