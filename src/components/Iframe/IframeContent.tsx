@@ -9,6 +9,7 @@ import { SettingsPanel } from '../Popup/SettingsPanel';
 import { ApiMonitor } from '../Dev/ApiMonitor';
 import { LoginForm } from '../LoginForm';
 import { useJobData } from '@/hooks/useJobData';
+import { useAdmin } from '@/hooks/useAdmin';
 import { useTheme } from '@/hooks/useTheme';
 import { THEME_OPTIONS } from '@/utils/constants';
 import { supabaseAuth } from '@/services/supabaseAuth';
@@ -17,9 +18,11 @@ import type { DirectSupabaseAuthState } from '@/services/directSupabaseAuth';
 
 export const IframeContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState('details');
-  const [isAdmin] = useState(false);
   const [showMonitor, setShowMonitor] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  
+  // Use admin detection hook
+  const { isAdmin, isLoading: isAdminLoading } = useAdmin();
   
   // Authentication state for iframe - start with not authenticated
   const [authState, setAuthState] = useState<DirectSupabaseAuthState>(() => {

@@ -8,6 +8,7 @@ import { AdminPanel } from '../Popup/AdminPanel';
 import { SettingsPanel } from '../Popup/SettingsPanel';
 import { ApiMonitor } from '../Dev/ApiMonitor';
 import { useJobData } from '@/hooks/useJobData';
+import { useAdmin } from '@/hooks/useAdmin';
 // import { TABS } from '@/utils/constants';
 
 interface FloatingContentProps {
@@ -16,8 +17,10 @@ interface FloatingContentProps {
 
 export const FloatingContent: React.FC<FloatingContentProps> = ({ onMinimize }) => {
   const [activeTab, setActiveTab] = useState('details');
-  const [isAdmin] = useState(false);
   const [showMonitor, setShowMonitor] = useState(false);
+  
+  // Use admin detection hook
+  const { isAdmin, isLoading: isAdminLoading } = useAdmin();
   
   const {
     jobData,

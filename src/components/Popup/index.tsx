@@ -10,12 +10,15 @@ import { SettingsPanel } from './SettingsPanel';
 import { ApiMonitor } from '../Dev/ApiMonitor';
 import { LoginForm } from '../LoginForm';
 import { useJobData } from '@/hooks/useJobData';
+import { useAdmin } from '@/hooks/useAdmin';
 // import { TABS } from '@/utils/constants';
 
 export const Popup: React.FC = () => {
   const [activeTab, setActiveTab] = useState('details');
-  const [isAdmin] = useState(false);
   const [showMonitor, setShowMonitor] = useState(false);
+  
+  // Use admin detection hook
+  const { isAdmin, isLoading: isAdminLoading } = useAdmin();
   
   const {
     jobData,
