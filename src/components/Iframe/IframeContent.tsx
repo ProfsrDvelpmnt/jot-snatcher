@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
 import { TabContainer } from '../Popup/TabContainer';
 import { StatusBar } from '../Popup/StatusBar';
-import { UsageCounter } from '../Popup/UsageCounter';
+import { UsageDisplay } from '../Header/UsageDisplay';
+import { StatusRow } from '../Status/StatusRow';
+import { ConnectionStatus } from '../Status/ConnectionStatus';
+import { UsageStatus } from '../Status/UsageStatus';
 import { JobDetails } from '../Popup/JobDetails';
 import { JobDescription } from '../Popup/JobDescription';
+import { StatusPanel } from '../Popup/StatusPanel';
 import { AdminPanel } from '../Popup/AdminPanel';
-import { SettingsPanel } from '../Popup/SettingsPanel';
-import { ApiMonitor } from '../Dev/ApiMonitor';
+import { SignOutPanel } from '../Popup/SignOutPanel';
 import { LoginForm } from '../LoginForm';
 import { useJobData } from '@/hooks/useJobData';
+import { isAdminEmail } from '@/utils/adminUtils';
+// import { useAdmin } from '@/hooks/useAdmin'; // TEMPORARY: Disabled for troubleshooting
 import { useTheme } from '@/hooks/useTheme';
 import { THEME_OPTIONS } from '@/utils/constants';
 import { supabaseAuth } from '@/services/supabaseAuth';
@@ -17,8 +22,6 @@ import type { DirectSupabaseAuthState } from '@/services/directSupabaseAuth';
 
 export const IframeContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState('details');
-  const [isAdmin] = useState(false);
-  const [showMonitor, setShowMonitor] = useState(false);
   const { theme, toggleTheme } = useTheme();
   
   // Authentication state for iframe - start with not authenticated
@@ -40,6 +43,9 @@ export const IframeContent: React.FC = () => {
   
   // Track if user has explicitly signed out to prevent quick re-authentication
   const [hasExplicitlySignedOut, setHasExplicitlySignedOut] = useState(false);
+
+  // Check if current user is admin
+  const isAdmin = isAdminEmail(authState.userEmail || '');
 
   // Listen for theme changes and authentication data from content script
   React.useEffect(() => {
@@ -230,9 +236,22 @@ export const IframeContent: React.FC = () => {
           />
         );
       case 'description':
-        return <JobDescription jobData={jobData} onUpdate={updateJobData} onSignOut={handleSignOut} />;
+        return <JobDescription jobData={jobData} onUpdate={updateJobData} />;
+      case 'status':
+        return (
+          <StatusPanel
+            isConnected={isWebappConnected}
+            usageData={usageData}
+            isAuthenticated={authState.isAuthenticated}
+            userName={authState.userName}
+            userEmail={authState.userEmail}
+            onRefresh={refreshUsageData}
+          />
+        );
       case 'admin':
         return <AdminPanel isAdmin={isAdmin} />;
+      case 'signout':
+        return <SignOutPanel onSignOut={handleSignOut} userName={authState.userName} userEmail={authState.userEmail} />;
       default:
         return null;
     }
@@ -250,20 +269,18 @@ export const IframeContent: React.FC = () => {
         <LoginForm onResetSignOutFlag={() => setHasExplicitlySignedOut(false)} />
       ) : (
         <>
-          <TabContainer
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            isAdmin={isAdmin}
-          />
+            <TabContainer
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              isAdmin={isAdmin}
+            />
           
-          <StatusBar
-            isConnected={isWebappConnected}
-            statusText={isWebappConnected ? "Connected to SP-JOT" : "Not Connected to SP-JOT"}
-            isSupabaseConnected={isSupabaseConnected}
-            supabaseStatusText={isSupabaseConnected ? "Supabase Connected" : "Supabase Disconnected"}
-          />
+          <StatusRow>
+            <ConnectionStatus type="sp-jot" connected={isWebappConnected} />
+            <ConnectionStatus type="supabase" connected={isSupabaseConnected} />
+            <UsageStatus usageData={usageData} onRefresh={refreshUsageData} />
+          </StatusRow>
           
-          <UsageCounter usageData={usageData} onRefresh={refreshUsageData} />
           
           <div className="flex-1 overflow-y-auto">
             {renderTabContent()}
@@ -271,14 +288,6 @@ export const IframeContent: React.FC = () => {
         </>
       )}
 
-      {/* Settings Panel at Bottom */}
-      <SettingsPanel 
-        onMonitorToggle={setShowMonitor} 
-        showMonitor={showMonitor} 
-      />
-      
-      {/* API Monitor Overlay */}
-      <ApiMonitor isVisible={showMonitor} onClose={() => setShowMonitor(false)} />
     </div>
   );
 };

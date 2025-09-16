@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { TabContainer } from '../Popup/TabContainer';
 import { StatusBar } from '../Popup/StatusBar';
-import { UsageCounter } from '../Popup/UsageCounter';
 import { JobDetails } from '../Popup/JobDetails';
 import { JobDescription } from '../Popup/JobDescription';
+import { StatusPanel } from '../Popup/StatusPanel';
 import { AdminPanel } from '../Popup/AdminPanel';
-import { SettingsPanel } from '../Popup/SettingsPanel';
-import { ApiMonitor } from '../Dev/ApiMonitor';
+import { SignOutPanel } from '../Popup/SignOutPanel';
+import { UsageDisplay } from '../Header/UsageDisplay';
 import { useJobData } from '@/hooks/useJobData';
+import { isAdminEmail } from '@/utils/adminUtils';
+// import { useAdmin } from '@/hooks/useAdmin'; // TEMPORARY: Disabled for troubleshooting
 // import { TABS } from '@/utils/constants';
 
 interface FloatingContentProps {
@@ -16,14 +18,14 @@ interface FloatingContentProps {
 
 export const FloatingContent: React.FC<FloatingContentProps> = ({ onMinimize }) => {
   const [activeTab, setActiveTab] = useState('details');
-  const [isAdmin] = useState(false);
-  const [showMonitor, setShowMonitor] = useState(false);
   
   const {
     jobData,
     usageData,
     isConnected,
     isLoading,
+    isAuthenticated,
+    userName,
     successMessage,
     setSuccessMessage,
     collectJobData,
@@ -31,10 +33,24 @@ export const FloatingContent: React.FC<FloatingContentProps> = ({ onMinimize }) 
     sendJobData,
     clearJobData,
     updateJobData,
+    refreshUsageData,
   } = useJobData();
+
+  // Check if current user is admin
+  const isAdmin = isAdminEmail(userName || '');
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      console.log('🔄 FloatingContent: User requested sign out');
+      // For floating content, we can send a message to close the iframe
+      window.parent.postMessage({ type: 'SIGN_OUT' }, '*');
+    } catch (error) {
+      console.error('❌ Error signing out:', error);
+    }
   };
 
   const renderTabContent = () => {
@@ -55,8 +71,19 @@ export const FloatingContent: React.FC<FloatingContentProps> = ({ onMinimize }) 
         );
       case 'description':
         return <JobDescription jobData={jobData} onUpdate={updateJobData} />;
+      case 'status':
+        return (
+          <StatusPanel
+            isConnected={isConnected}
+            usageData={usageData}
+            isAuthenticated={isAuthenticated}
+            onRefresh={refreshUsageData}
+          />
+        );
       case 'admin':
         return <AdminPanel isAdmin={isAdmin} />;
+      case 'signout':
+        return <SignOutPanel onSignOut={handleSignOut} userName={userName || undefined} />;
       default:
         return null;
     }
@@ -75,26 +102,35 @@ export const FloatingContent: React.FC<FloatingContentProps> = ({ onMinimize }) 
 
       {/* Header */}
       <div className="bg-terracotta text-white p-4 rounded-t-2xl">
-        <div className="flex items-center">
-          <img 
-            src={chrome.runtime.getURL('icons/spjot-48.png')} 
-            alt="SP JOT Collector" 
-            className="w-8 h-8 mr-3"
-          />
-          <div>
-            <h2 className="text-lg font-bold">SP JOT Collector</h2>
-            <p className="text-sm text-white/80">Extract and edit job information</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <img 
+              src={chrome.runtime.getURL('icons/spjot-48.png')} 
+              alt="SP JOT Collector" 
+              className="w-8 h-8 mr-3"
+            />
+            <div>
+              <h2 className="text-lg font-bold">SP JOT Collector</h2>
+              <p className="text-sm text-white/80">Extract and edit job information</p>
+            </div>
+          </div>
+          {/* Usage Display in Header */}
+          <div className="flex items-center">
+            <UsageDisplay 
+              usageData={usageData || undefined} 
+              isCompact={true}
+            />
           </div>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="px-4 pt-4">
-        <TabContainer
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          isAdmin={isAdmin}
-        />
+          <TabContainer
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            isAdmin={isAdmin}
+          />
       </div>
 
       {/* Status */}
@@ -103,7 +139,6 @@ export const FloatingContent: React.FC<FloatingContentProps> = ({ onMinimize }) 
           isConnected={isConnected}
           statusText={isConnected ? "Connected to SP-JOT" : "Not Connected"}
         />
-        <UsageCounter usageData={usageData} />
       </div>
 
       {/* Content */}
@@ -111,14 +146,6 @@ export const FloatingContent: React.FC<FloatingContentProps> = ({ onMinimize }) 
         {renderTabContent()}
       </div>
 
-      {/* Settings Panel at Bottom */}
-      <SettingsPanel 
-        onMonitorToggle={setShowMonitor} 
-        showMonitor={showMonitor} 
-      />
-      
-      {/* API Monitor Overlay */}
-      <ApiMonitor isVisible={showMonitor} onClose={() => setShowMonitor(false)} />
     </div>
   );
 };

@@ -5,10 +5,9 @@ import { supabaseAuth } from '@/services/supabaseAuth';
 interface JobDescriptionProps {
   jobData: JobData | null;
   onUpdate: (updatedData: JobData) => void;
-  onSignOut?: () => void;
 }
 
-export const JobDescription: React.FC<JobDescriptionProps> = ({ jobData, onUpdate, onSignOut }) => {
+export const JobDescription: React.FC<JobDescriptionProps> = ({ jobData, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState('');
 
@@ -51,15 +50,6 @@ export const JobDescription: React.FC<JobDescriptionProps> = ({ jobData, onUpdat
             Job Description
           </h3>
           <div className="flex items-center gap-2">
-            {onSignOut && (
-              <button
-                onClick={onSignOut}
-                className="px-3 py-1 text-xs font-semibold text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 rounded-lg transition-all duration-200 hover:scale-105"
-                title="Sign Out"
-              >
-                Sign Out
-              </button>
-            )}
             {!isEditing ? (
               <button
                 onClick={handleEdit}
