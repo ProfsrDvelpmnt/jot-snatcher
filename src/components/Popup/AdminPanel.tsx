@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { configService } from '@/services/config';
 import { apiService } from '@/services/api';
-import { ApiMonitor } from '../Dev/ApiMonitor';
+// import { ApiMonitor } from '../Dev/ApiMonitor'; // Removed for production
 
 interface AdminPanelProps {
   isAdmin: boolean;
@@ -162,8 +162,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isAdmin }) => {
         </div>
       </div>
 
-      {/* API Monitor Overlay */}
-      <ApiMonitor isVisible={showMonitor} onClose={() => setShowMonitor(false)} />
+      {/* API Monitor removed for production */}
     </div>
   );
 };
