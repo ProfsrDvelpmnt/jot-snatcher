@@ -24,6 +24,8 @@ export const Popup: React.FC = () => {
     isLoading,
     isAuthenticated,
     requiresLogin,
+    successMessage,
+    setSuccessMessage,
     collectJobData,
     exportJobData,
     sendJobData,
@@ -47,6 +49,8 @@ export const Popup: React.FC = () => {
             onClear={clearJobData}
             onUpdate={updateJobData}
             isLoading={isLoading}
+            successMessage={successMessage}
+            setSuccessMessage={setSuccessMessage}
           />
         );
       case 'description':

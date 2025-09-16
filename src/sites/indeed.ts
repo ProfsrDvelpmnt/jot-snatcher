@@ -3,6 +3,7 @@ import { JobExtractor } from '@/utils/enhancedJobExtractor';
 import { SiteConfig } from '@/utils/siteDetector';
 import { JobData } from '@/types';
 import { parseSalary } from '@/utils/salaryParser';
+import { cleanJobUrl } from '@/utils/urlCleaner';
 
 export class IndeedExtractor extends JobExtractor {
   constructor() {
@@ -143,7 +144,7 @@ export class IndeedExtractor extends JobExtractor {
     return {
       organization: organization.trim(),
       position: title.trim(),
-      link: window.location.href,
+      link: cleanJobUrl(window.location.href),
       salary: parsedSalary.salary,
       salary_type: parsedSalary.salary_type,
       salary_min: parsedSalary.salary_min,
@@ -156,13 +157,13 @@ export class IndeedExtractor extends JobExtractor {
       job_site: 'Indeed',
       date_saved: new Date().toISOString(),
       date_posted: null,
-      job_posting_url: window.location.href,
+      job_posting_url: cleanJobUrl(window.location.href),
       description: '',
       // Legacy fields
       jobId: this.generateJobId(),
       companyName: organization.trim(),
-      jobLink: window.location.href,
-      jobTitle: title.trim(),
+      jobLink: cleanJobUrl(window.location.href),
+      jobTitle: this.cleanPositionTitle(title) || title.trim(),
       workType: this.normalizeJobType(jobType) || 'Not specified',
       ageOfPosting: 'Unknown',
       numApplicants: 'Unknown'
@@ -173,7 +174,8 @@ export class IndeedExtractor extends JobExtractor {
     // Extract title from the selected job panel
     const titleElement = panel.querySelector('.jobsearch-JobInfoHeader-title') ||
                         panel.querySelector('[data-testid="jobsearch-JobInfoHeader-title"]') ||
-                        panel.querySelector('h2');
+                        panel.querySelector('h2') ||
+                        panel.querySelector('h1');
     const title = titleElement?.textContent?.trim() || '';
     if (!title) return null;
 
@@ -183,51 +185,68 @@ export class IndeedExtractor extends JobExtractor {
                           panel.querySelector('.jobsearch-CompanyInfoContainer a');
     const organization = companyElement?.textContent?.trim() || 'Unknown Company';
 
+    // Get job details section early for use in multiple places
+    const jobDetailsSection = panel.querySelector('#jobDetailsSection');
+
     // Extract location - try multiple selectors
     let location = '';
     const locationElement = panel.querySelector('[data-testid="job-location"]') ||
                            panel.querySelector('[data-testid="inlineHeader-companyLocation"] [data-testid="job-location"]') ||
                            panel.querySelector('.jobsearch-JobInfoHeader-subtitle') ||
-                           panel.querySelector('.css-1wbl7v6');
+                           panel.querySelector('.css-1wbl7v6') ||
+                           panel.querySelector('[data-testid="inlineHeader-companyLocation"]') ||
+                           panel.querySelector('.jobsearch-JobInfoHeader-subtitle [data-testid="job-location"]') ||
+                           panel.querySelector('[data-testid="job-location"] span') ||
+                           panel.querySelector('.jobsearch-JobInfoHeader-subtitle span');
     location = locationElement?.textContent?.trim() || 'Not specified';
-
-    // Extract salary and job type from the salary info section
-    let salaryText = '';
-    let jobType = '';
     
-    // Try the salary info section first
-    const salaryInfoElement = panel.querySelector('#salaryInfoAndJobType');
-    if (salaryInfoElement) {
-      const salaryElement = salaryInfoElement.querySelector('.css-1oc7tea');
-      const jobTypeElement = salaryInfoElement.querySelector('.css-1u1g3ig');
-      
-      salaryText = salaryElement?.textContent?.trim() || '';
-      jobType = jobTypeElement?.textContent?.trim() || '';
-    }
-    
-    // If no salary found in salary info section, try other locations
-    if (!salaryText) {
-      // Look for salary in job details section
-      const jobDetailsSection = panel.querySelector('#jobDetailsSection');
-      if (jobDetailsSection) {
-        const paySection = jobDetailsSection.querySelector('[aria-label="Pay"]');
-        if (paySection) {
-          const salaryElement = paySection.querySelector('[data-testid="list-item"] .css-1f1q1js');
-          salaryText = salaryElement?.textContent?.trim() || '';
+    // If location not found in header, try job details section
+    if (location === 'Not specified' && jobDetailsSection) {
+      const locationSection = jobDetailsSection.querySelector('[aria-label="Location"]');
+      if (locationSection) {
+        const locationElement = locationSection.querySelector('[data-testid="list-item"] .css-1f1q1js') ||
+                               locationSection.querySelector('span');
+        const locationText = locationElement?.textContent?.trim();
+        if (locationText) {
+          location = locationText;
         }
       }
     }
+
+    // Extract salary and job type from the job details section
+    let salaryText = '';
+    let jobType = '';
     
-    // If no job type found in salary info section, try other locations
-    if (!jobType) {
-      // Look for job type in job details section
-      const jobDetailsSection = panel.querySelector('#jobDetailsSection');
-      if (jobDetailsSection) {
-        const jobTypeSection = jobDetailsSection.querySelector('[aria-label="Job type"]');
-        if (jobTypeSection) {
-          const jobTypeElement = jobTypeSection.querySelector('[data-testid="list-item"] .css-1f1q1js');
-          jobType = jobTypeElement?.textContent?.trim() || '';
-        }
+    // Look for salary and job type in job details section
+    if (jobDetailsSection) {
+      // Look for salary in Pay section
+      const paySection = jobDetailsSection.querySelector('[aria-label="Pay"]');
+      if (paySection) {
+        const salaryElement = paySection.querySelector('[data-testid="list-item"] .css-1f1q1js') ||
+                             paySection.querySelector('[data-testid="list-item"] span') ||
+                             paySection.querySelector('span');
+        salaryText = salaryElement?.textContent?.trim() || '';
+      }
+      
+      // Look for job type in Job type section
+      const jobTypeSection = jobDetailsSection.querySelector('[aria-label="Job type"]');
+      if (jobTypeSection) {
+        const jobTypeElement = jobTypeSection.querySelector('[data-testid="list-item"] .css-1f1q1js') ||
+                               jobTypeSection.querySelector('[data-testid="list-item"] span') ||
+                               jobTypeSection.querySelector('span');
+        jobType = jobTypeElement?.textContent?.trim() || '';
+      }
+    }
+    
+    // Fallback: try the salary info section
+    if (!salaryText || !jobType) {
+      const salaryInfoElement = panel.querySelector('#salaryInfoAndJobType');
+      if (salaryInfoElement) {
+        const salaryElement = salaryInfoElement.querySelector('.css-1oc7tea');
+        const jobTypeElement = salaryInfoElement.querySelector('.css-1u1g3ig');
+        
+        if (!salaryText) salaryText = salaryElement?.textContent?.trim() || '';
+        if (!jobType) jobType = jobTypeElement?.textContent?.trim() || '';
       }
     }
 
@@ -237,12 +256,56 @@ export class IndeedExtractor extends JobExtractor {
     const description = descriptionElement?.textContent?.trim() || '';
 
     const parsedSalary = parseSalary(salaryText);
-    const environment = this.detectEnvironmentFromDescription(description);
+    
+    // Extract environment from work setting section
+    let environment = 'Not specified';
+    if (jobDetailsSection) {
+      const workSettingSection = jobDetailsSection.querySelector('[aria-label="Work setting"]');
+      if (workSettingSection) {
+        const workSettingElement = workSettingSection.querySelector('[data-testid="list-item"] .css-1f1q1js') ||
+                                   workSettingSection.querySelector('[data-testid="list-item"] span') ||
+                                   workSettingSection.querySelector('span');
+        const workSettingText = workSettingElement?.textContent?.trim() || '';
+        if (workSettingText.includes('In-person')) {
+          environment = 'In-person';
+        } else if (workSettingText.includes('Remote')) {
+          environment = 'Remote';
+        } else if (workSettingText.includes('Hybrid')) {
+          environment = 'Hybrid';
+        }
+      }
+    }
+    
+    // Fallback: try to find work setting in the main job details section
+    if (environment === 'Not specified') {
+      const mainJobDetailsSection = document.querySelector('#jobDetailsSection');
+      if (mainJobDetailsSection) {
+        const workSettingSection = mainJobDetailsSection.querySelector('[aria-label="Work setting"]');
+        if (workSettingSection) {
+          const workSettingElement = workSettingSection.querySelector('[data-testid="list-item"] .css-1f1q1js') ||
+                                     workSettingSection.querySelector('[data-testid="list-item"] span') ||
+                                     workSettingSection.querySelector('span');
+          const workSettingText = workSettingElement?.textContent?.trim() || '';
+          if (workSettingText.includes('In-person')) {
+            environment = 'In-person';
+          } else if (workSettingText.includes('Remote')) {
+            environment = 'Remote';
+          } else if (workSettingText.includes('Hybrid')) {
+            environment = 'Hybrid';
+          }
+        }
+      }
+    }
+    
+    // Final fallback to description analysis
+    if (environment === 'Not specified') {
+      environment = this.detectEnvironmentFromDescription(description);
+    }
 
     return {
       organization: organization.trim(),
-      position: title.trim(),
-      link: window.location.href,
+      position: this.cleanPositionTitle(title) || title.trim(),
+      link: cleanJobUrl(window.location.href),
       salary: parsedSalary.salary,
       salary_type: parsedSalary.salary_type,
       salary_min: parsedSalary.salary_min,
@@ -255,13 +318,13 @@ export class IndeedExtractor extends JobExtractor {
       job_site: 'Indeed',
       date_saved: new Date().toISOString(),
       date_posted: null,
-      job_posting_url: window.location.href,
+      job_posting_url: cleanJobUrl(window.location.href),
       description: description || '',
       // Legacy fields
       jobId: this.generateJobId(),
       companyName: organization.trim(),
-      jobLink: window.location.href,
-      jobTitle: title.trim(),
+      jobLink: cleanJobUrl(window.location.href),
+      jobTitle: this.cleanPositionTitle(title) || title.trim(),
       workType: this.normalizeJobType(jobType) || 'Not specified',
       ageOfPosting: 'Unknown',
       numApplicants: 'Unknown'
@@ -272,7 +335,7 @@ export class IndeedExtractor extends JobExtractor {
     const jobContainer = this.findJobContainer();
     if (!jobContainer) return null;
 
-    const position = this.extractTextWithFallbacks(jobContainer, this.selectors.title);
+    const position = this.cleanPositionTitle(this.extractTextWithFallbacks(jobContainer, this.selectors.title));
     const organization = this.extractTextWithFallbacks(jobContainer, this.selectors.company);
 
     if (!position || !organization) return null;
@@ -280,15 +343,15 @@ export class IndeedExtractor extends JobExtractor {
     const location = this.extractTextWithFallbacks(jobContainer, this.selectors.location);
     const salaryText = this.extractTextWithFallbacks(jobContainer, this.selectors.salary);
     const description = this.extractTextWithFallbacks(jobContainer, this.selectors.description);
-    const jobType = this.extractTextWithFallbacks(jobContainer, this.selectors.jobType);
+    const jobType = this.extractJobTypeFromJobDetails(jobContainer);
 
     const parsedSalary = parseSalary(salaryText);
-    const environment = this.detectEnvironmentFromDescription(description);
+    const environment = this.extractEnvironmentFromJobDetails(jobContainer);
 
     return {
       organization: organization.trim(),
       position: position.trim(),
-      link: window.location.href,
+      link: cleanJobUrl(window.location.href),
       salary: parsedSalary.salary,
       salary_type: parsedSalary.salary_type,
       salary_min: parsedSalary.salary_min,
@@ -301,12 +364,12 @@ export class IndeedExtractor extends JobExtractor {
       job_site: 'Indeed',
       date_saved: new Date().toISOString(),
       date_posted: null,
-      job_posting_url: window.location.href,
+      job_posting_url: cleanJobUrl(window.location.href),
       description: description || '',
       // Legacy fields
       jobId: this.generateJobId(),
       companyName: organization.trim(),
-      jobLink: window.location.href,
+      jobLink: cleanJobUrl(window.location.href),
       jobTitle: position.trim(),
       workType: this.normalizeJobType(jobType) || 'Not specified',
       ageOfPosting: 'Unknown',
@@ -318,5 +381,115 @@ export class IndeedExtractor extends JobExtractor {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substr(2, 5);
     return `JOB-${timestamp}-${random}`;
+  }
+
+  // Clean position title by removing Indeed-specific suffixes
+  private cleanPositionTitle(position: string | null): string | null {
+    if (!position) {
+      return null;
+    }
+
+    let cleaned = position.trim();
+    
+    // Remove " - job post" suffix
+    if (cleaned.endsWith(' - job post')) {
+      cleaned = cleaned.replace(' - job post', '').trim();
+    }
+    
+    // Remove other common Indeed suffixes
+    const suffixesToRemove = [
+      ' - job post',
+      ' - job',
+      ' job post',
+      ' job',
+      ' - indeed',
+      ' - indeed.com'
+    ];
+    
+    for (const suffix of suffixesToRemove) {
+      if (cleaned.endsWith(suffix)) {
+        cleaned = cleaned.replace(suffix, '').trim();
+        break; // Only remove one suffix
+      }
+    }
+    
+    return cleaned || null;
+  }
+
+  // Extract environment from job details section
+  private extractEnvironmentFromJobDetails(container: Element): string {
+    // Look for "Work setting" in job details
+    const workSettingElements = container.querySelectorAll('*');
+    for (const element of workSettingElements) {
+      const text = element.textContent?.trim();
+      if (text && text.includes('Work setting:')) {
+        const setting = text.replace('Work setting:', '').trim();
+        if (setting.toLowerCase().includes('in-person')) {
+          return 'In-person';
+        } else if (setting.toLowerCase().includes('remote')) {
+          return 'Remote';
+        } else if (setting.toLowerCase().includes('hybrid')) {
+          return 'Hybrid';
+        }
+      }
+    }
+
+    // Look for environment indicators in location
+    const location = this.extractTextWithFallbacks(container, this.selectors.location);
+    if (location) {
+      const locationLower = location.toLowerCase();
+      if (locationLower.includes('remote')) {
+        return 'Remote';
+      } else if (locationLower.includes('hybrid')) {
+        return 'Hybrid';
+      } else if (locationLower.includes('in-person') || locationLower.includes('onsite')) {
+        return 'In-person';
+      }
+    }
+
+    // Fallback to description analysis
+    const description = this.extractTextWithFallbacks(container, this.selectors.description);
+    if (description) {
+      return this.detectEnvironmentFromDescription(description);
+    }
+
+    return 'Not specified';
+  }
+
+  // Extract job type from job details section
+  private extractJobTypeFromJobDetails(container: Element): string {
+    // Look for "Job type" in job details
+    const jobTypeElements = container.querySelectorAll('*');
+    for (const element of jobTypeElements) {
+      const text = element.textContent?.trim();
+      if (text && text.includes('Job type:')) {
+        const type = text.replace('Job type:', '').trim();
+        if (this.isValidJobType(type)) {
+          return type;
+        }
+      }
+    }
+
+    // Look in general selectors
+    const jobTypeText = this.extractTextWithFallbacks(container, this.selectors.jobType);
+    if (jobTypeText && this.isValidJobType(jobTypeText)) {
+      return jobTypeText;
+    }
+
+    return 'Not specified';
+  }
+
+  // Validate job type
+  private isValidJobType(text: string): boolean {
+    if (!text) return false;
+    
+    const validTypes = [
+      'full-time', 'full time', 'part-time', 'part time', 'contract', 'seasonal',
+      'temporary', 'permanent', 'internship', 'intern', 'freelance', 'consultant', 'volunteer'
+    ];
+    
+    return validTypes.some(type => 
+      text.toLowerCase().includes(type.toLowerCase())
+    );
   }
 }

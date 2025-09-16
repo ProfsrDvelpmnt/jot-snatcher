@@ -1,5 +1,4 @@
-// LinkedIn-specific extraction logic - OPTIMIZED VERSION
-// This version keeps all essential functionality but optimizes code structure and reduces redundancy
+// LinkedIn-specific extraction logic
 import { JobExtractor } from '@/utils/enhancedJobExtractor';
 import { SiteConfig } from '@/utils/siteDetector';
 import { JobData } from '@/types';
@@ -85,14 +84,6 @@ export class LinkedInExtractor extends JobExtractor {
           '.job-details-fit-level-preferences button',
           '.artdeco-entity-lockup__metadata .tvm__text--low-emphasis',
           '.job-card-job-posting-card-wrapper__metadata .tvm__text--low-emphasis'
-        ],
-        
-        // Job ID selectors - for creating consistent job URLs
-        jobId: [
-          'a[href*="/jobs/view/"]',
-          '.job-card-job-posting-card-wrapper a[href*="/jobs/view/"]',
-          '.job-details-jobs-unified-top-card__job-title a[href*="/jobs/view/"]',
-          'a[data-job-id]'
         ]
       }
     });
@@ -118,7 +109,7 @@ export class LinkedInExtractor extends JobExtractor {
     }
 
     const location = this.extractTextWithFallbacks(jobContainer, this.selectors.location);
-    const salaryText = this.extractSalarySafely(jobContainer);
+    const salaryText = this.extractTextWithFallbacks(jobContainer, this.selectors.salary);
     const description = this.extractDescriptionWithFormatting(jobContainer);
     
     // Parse job type and environment from preferences
@@ -130,18 +121,13 @@ export class LinkedInExtractor extends JobExtractor {
     // Extract posting date and applicants
     const postingAge = this.extractPostingAge(jobContainer);
     const applicantCount = this.extractApplicantCount(jobContainer);
-    
-    // Extract job ID and create consistent job URL
-    const jobId = this.extractJobId();
-    const jobUrl = jobId ? `https://www.linkedin.com/jobs/view/${jobId}/` : window.location.href;
 
     const jobData: JobData = {
       organization: organization.trim(),
       position: position.trim(),
-      link: jobUrl,
+      link: window.location.href,
       salary: parsedSalary.salary,
       salary_type: parsedSalary.salary_type,
-      salaryTypeDisplay: this.capitalizeSalaryType(parsedSalary.salary_type),
       salary_min: parsedSalary.salary_min,
       salary_max: parsedSalary.salary_max,
       location: location || 'Not specified',
@@ -152,12 +138,12 @@ export class LinkedInExtractor extends JobExtractor {
       job_site: 'LinkedIn',
       date_saved: new Date().toISOString(),
       date_posted: postingAge, // Keep for API compatibility
-      job_posting_url: jobUrl,
+      job_posting_url: window.location.href,
       description: description || '',
       // Legacy fields
       jobId: this.generateJobId(),
       companyName: organization.trim(),
-      jobLink: jobUrl,
+      jobLink: window.location.href,
       jobTitle: position.trim(),
       workType: jobType || 'Not specified',
       ageOfPosting: postingAge ? this.formatRelativeTime(postingAge) : 'Unknown',
@@ -295,8 +281,8 @@ export class LinkedInExtractor extends JobExtractor {
     return `JOB-${timestamp}-${random}`;
   }
 
-  // OPTIMIZED: Combined time formatting logic to reduce code duplication
   private formatRelativeTime(timeText: string): string {
+    // Handle various time formats from LinkedIn
     const text = timeText.toLowerCase().trim();
     
     // Handle "Reposted X time ago" format
@@ -312,149 +298,82 @@ export class LinkedInExtractor extends JobExtractor {
       return this.parseTimeAgo(text);
     }
     
-    // Use the unified time parsing for all formats
-    return this.parseTimeAgo(text);
+    // Handle specific time formats
+    if (text.includes('hour')) {
+      const match = text.match(/(\d+)\s*hour/);
+      if (match) {
+        const hours = parseInt(match[1]);
+        return hours === 1 ? '1 hour ago' : `${hours} hours ago`;
+      }
+    }
+    
+    if (text.includes('day')) {
+      const match = text.match(/(\d+)\s*day/);
+      if (match) {
+        const days = parseInt(match[1]);
+        return days === 1 ? '1 day ago' : `${days} days ago`;
+      }
+    }
+    
+    if (text.includes('week')) {
+      const match = text.match(/(\d+)\s*week/);
+      if (match) {
+        const weeks = parseInt(match[1]);
+        return weeks === 1 ? '1 week ago' : `${weeks} weeks ago`;
+      }
+    }
+    
+    if (text.includes('month')) {
+      const match = text.match(/(\d+)\s*month/);
+      if (match) {
+        const months = parseInt(match[1]);
+        return months === 1 ? '1 month ago' : `${months} months ago`;
+      }
+    }
+    
+    // Return original text if no pattern matches
+    return timeText;
   }
   
-  // OPTIMIZED: Unified time parsing with better regex and reduced duplication
   private parseTimeAgo(timeStr: string): string {
     const text = timeStr.toLowerCase().trim();
     
-    // Single regex pattern for all time formats
-    const timePatterns = [
-      { pattern: /(\d+)\s*hour/, unit: 'hour', plural: 'hours' },
-      { pattern: /(\d+)\s*day/, unit: 'day', plural: 'days' },
-      { pattern: /(\d+)\s*week/, unit: 'week', plural: 'weeks' },
-      { pattern: /(\d+)\s*month/, unit: 'month', plural: 'months' }
-    ];
-    
-    for (const { pattern, unit, plural } of timePatterns) {
-      const match = text.match(pattern);
+    // Handle "X hours ago"
+    if (text.includes('hour')) {
+      const match = text.match(/(\d+)\s*hour/);
       if (match) {
-        const count = parseInt(match[1]);
-        return count === 1 ? `1 ${unit} ago` : `${count} ${plural} ago`;
+        const hours = parseInt(match[1]);
+        return hours === 1 ? '1 hour ago' : `${hours} hours ago`;
+      }
+    }
+    
+    // Handle "X days ago"
+    if (text.includes('day')) {
+      const match = text.match(/(\d+)\s*day/);
+      if (match) {
+        const days = parseInt(match[1]);
+        return days === 1 ? '1 day ago' : `${days} days ago`;
+      }
+    }
+    
+    // Handle "X weeks ago"
+    if (text.includes('week')) {
+      const match = text.match(/(\d+)\s*week/);
+      if (match) {
+        const weeks = parseInt(match[1]);
+        return weeks === 1 ? '1 week ago' : `${weeks} weeks ago`;
+      }
+    }
+    
+    // Handle "X months ago"
+    if (text.includes('month')) {
+      const match = text.match(/(\d+)\s*month/);
+      if (match) {
+        const months = parseInt(match[1]);
+        return months === 1 ? '1 month ago' : `${months} months ago`;
       }
     }
     
     return timeStr;
   }
-
-  // Extract job ID from LinkedIn job URLs for consistent job linking
-  private extractJobId(): string | null {
-    const jobIdSelectors = this.selectors.jobId || [];
-    
-    // First try to find job ID in href attributes
-    for (const selector of jobIdSelectors) {
-      const element = document.querySelector(selector) as HTMLAnchorElement;
-      if (element && element.href) {
-        // Extract job ID from LinkedIn job URL pattern: /jobs/view/4297522295/
-        const match = element.href.match(/\/jobs\/view\/(\d+)\/?/);
-        if (match) {
-          console.log(`✅ LinkedIn: Found job ID ${match[1]} from href: ${element.href}`);
-          return match[1];
-        }
-      }
-    }
-    
-    // Fallback: try to extract from current URL if it's a job view page
-    const currentUrlMatch = window.location.href.match(/\/jobs\/view\/(\d+)\/?/);
-    if (currentUrlMatch) {
-      console.log(`✅ LinkedIn: Found job ID ${currentUrlMatch[1]} from current URL`);
-      return currentUrlMatch[1];
-    }
-    
-    // Fallback: try to extract from data-job-id attribute
-    for (const selector of jobIdSelectors) {
-      const element = document.querySelector(selector);
-      if (element) {
-        const dataJobId = element.getAttribute('data-job-id');
-        if (dataJobId) {
-          console.log(`✅ LinkedIn: Found job ID ${dataJobId} from data-job-id attribute`);
-          return dataJobId;
-        }
-      }
-    }
-    
-    console.log('❌ LinkedIn: No job ID found');
-    return null;
-  }
-
-  // Capitalize salary type to match other job fields
-  private capitalizeSalaryType(salaryType: string): string {
-    switch (salaryType.toLowerCase()) {
-      case 'annual':
-        return 'Annual';
-      case 'hourly':
-        return 'Hourly';
-      case 'monthly':
-        return 'Monthly';
-      case 'contract':
-        return 'Contract';
-      default:
-        return 'Annual'; // Default fallback
-    }
-  }
-
-  // Safe salary extraction with validation
-  private extractSalarySafely(container: Element): string | null {
-    const salaryText = this.extractTextWithFallbacks(container, this.selectors.salary);
-    
-    if (!salaryText) {
-      return null;
-    }
-    
-    // Validate that the text actually contains salary information
-    if (this.isValidSalaryText(salaryText)) {
-      return salaryText;
-    }
-    
-    return null;
-  }
-
-  // Validate salary text to ensure it's actually salary information
-  private isValidSalaryText(text: string): boolean {
-    const cleanText = text.toLowerCase().trim();
-    
-    // Must contain a dollar sign
-    if (!cleanText.includes('$')) {
-      return false;
-    }
-    
-    // Must contain salary indicators
-    const salaryIndicators = [
-      'per year', 'annually', 'yearly', '/yr', 'per hour', 'hourly', '/hr',
-      'per month', 'monthly', '/mo', 'salary', 'compensation', 'pay'
-    ];
-    
-    const hasSalaryIndicator = salaryIndicators.some(indicator => 
-      cleanText.includes(indicator)
-    );
-    
-    if (!hasSalaryIndicator) {
-      return false;
-    }
-    
-    // Must contain numbers
-    if (!/\d/.test(cleanText)) {
-      return false;
-    }
-    
-    // Reject job type indicators (like "Remote", "Onsite", "Hybrid")
-    const jobTypeIndicators = [
-      'remote', 'onsite', 'on-site', 'hybrid', 'full-time', 'part-time',
-      'contract', 'temporary', 'permanent', 'internship', 'freelance'
-    ];
-    
-    const hasJobTypeIndicator = jobTypeIndicators.some(indicator => 
-      cleanText.includes(indicator)
-    );
-    
-    if (hasJobTypeIndicator) {
-      return false;
-    }
-    
-    return true;
-  }
 }
-
-

@@ -3,9 +3,10 @@ import { supabaseAuth } from '../services/supabaseAuth';
 
 interface LoginFormProps {
   onLoginSuccess?: () => void;
+  onResetSignOutFlag?: () => void;
 }
 
-export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
+export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onResetSignOutFlag }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,6 +21,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
     
     if (result.success) {
       console.log('✅ Login successful');
+      onResetSignOutFlag?.(); // Reset the explicit sign-out flag
       onLoginSuccess?.();
     } else {
       setError(result.error || 'Login failed');

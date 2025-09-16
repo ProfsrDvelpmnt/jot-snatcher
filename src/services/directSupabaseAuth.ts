@@ -279,15 +279,11 @@ export class DirectSupabaseAuthService {
       if (!tier) {
         console.log('⚠️ DirectSupabaseAuth: No subscription data found, determining tier from usage patterns');
         
-        if (currentUsage >= 1000) {
-          tier = 'enterprise';
-        } else if (currentUsage >= 400) {
+        if (currentUsage >= 400) {
           tier = 'executive';
-        } else if (currentUsage >= 200) {
-          tier = 'premium';
         } else if (currentUsage >= 150) {
           tier = 'professional';
-        } else if (currentUsage >= 5) {
+        } else if (currentUsage >= 20) {
           tier = 'basic';
         } else {
           // User has no usage yet, but they have a login, so they must have a plan
@@ -341,57 +337,22 @@ export class DirectSupabaseAuthService {
   }
 
   private async getMonthlyLimitForTier(tier: string): Promise<number> {
-    // Query Supabase for the actual monthly limit for this tier
-    try {
-      console.log('🔍 DirectSupabaseAuth: Querying monthly limit for tier:', tier);
-      
-      // Query subscription_plans table for the actual limit
-      const { data: planData, error: planError } = await supabase
-        .from('subscription_plans')
-        .select('monthly_limit')
-        .eq('plan_name', tier)
-        .single();
-
-      if (planError) {
-        console.log('⚠️ DirectSupabaseAuth: No subscription_plans table or error:', planError.message);
-        
-        // Fallback: try to get from subscription data if available
-        const { data: subscriptionData, error: subError } = await supabase
-          .from('subscriptions')
-          .select('monthly_limit')
-          .eq('plan', tier)
-          .eq('status', 'active')
-          .single();
-
-        if (subError) {
-          console.log('⚠️ DirectSupabaseAuth: No subscription data found, using fallback limit');
-          // Last resort fallback - this should be avoided in production
-          return this.getFallbackLimit(tier);
-        }
-
-        return subscriptionData.monthly_limit || this.getFallbackLimit(tier);
-      }
-
-      return planData.monthly_limit || this.getFallbackLimit(tier);
-    } catch (error) {
-      console.error('❌ DirectSupabaseAuth: Error querying monthly limit:', error);
-      return this.getFallbackLimit(tier);
-    }
-  }
-
-  private getFallbackLimit(tier: string): number {
-    // Emergency fallback - this should only be used if Supabase is completely unavailable
-    console.warn('⚠️ DirectSupabaseAuth: Using emergency fallback limits - this should not happen in production');
-    const emergencyLimits: { [key: string]: number } = {
+    // Use predefined limits based on tier - no database queries needed
+    console.log('🔍 DirectSupabaseAuth: Getting monthly limit for tier:', tier);
+    
+    // Define limits based on tier (only existing tiers)
+    const tierLimits: { [key: string]: number } = {
       'free': 5,
       'basic': 20,
       'professional': 150,
-      'executive': 400,
-      'premium': 200,
-      'enterprise': 1000
+      'executive': 400
     };
-    return emergencyLimits[tier] || 5;
+    
+    const limit = tierLimits[tier] || 5;
+    console.log('📊 DirectSupabaseAuth: Using limit for tier', tier, ':', limit);
+    return limit;
   }
+
 
   private extractUserName(user: any, profile: any): string {
     // Extract user name from user metadata or email
@@ -459,13 +420,32 @@ export class DirectSupabaseAuthService {
           this.refreshInterval = null;
         }
       }
-    }, 5 * 60 * 1000);
+    }, 60 * 1000); // 60 seconds
   }
 
   // Public methods
   public getAuthState(): DirectSupabaseAuthState {
     console.log('🔍 DirectSupabaseAuth: getAuthState called, current state:', this.authState);
     return { ...this.authState };
+  }
+
+  public async getSessionToken(): Promise<string | null> {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('❌ DirectSupabaseAuth: Error getting session:', error);
+        return null;
+      }
+      if (session?.access_token) {
+        console.log('✅ DirectSupabaseAuth: Retrieved session token');
+        return session.access_token;
+      }
+      console.log('⚠️ DirectSupabaseAuth: No session token found');
+      return null;
+    } catch (error) {
+      console.error('❌ DirectSupabaseAuth: Error getting session token:', error);
+      return null;
+    }
   }
 
   public isAuthenticated(): boolean {
@@ -516,9 +496,20 @@ export class DirectSupabaseAuthService {
 
       if (error) {
         console.error('❌ DirectSupabaseAuth: Sign in failed:', error);
+        
+        // Provide more specific error messages
+        let errorMessage = error.message;
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = 'Invalid email or password. Please check your credentials.';
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = 'Please check your email and confirm your account.';
+        } else if (error.message.includes('Too many requests')) {
+          errorMessage = 'Too many login attempts. Please try again later.';
+        }
+        
         return { 
           success: false, 
-          error: error.message 
+          error: errorMessage 
         };
       }
 
@@ -658,11 +649,12 @@ export class DirectSupabaseAuthService {
       if (this.authState.isAuthenticated && this.authState.userId) {
         console.log('✅ DirectSupabaseAuth: User is authenticated via auth state');
         
-        // Test a simple query to verify database connectivity
+        // Test a simple query to verify database connectivity using extension_usage table
         try {
           const { data, error: queryError } = await supabase
-            .from('profiles')
-            .select('id')
+            .from('extension_usage')
+            .select('user_id')
+            .eq('user_id', this.authState.userId)
             .limit(1);
           
           if (queryError) {
@@ -694,11 +686,11 @@ export class DirectSupabaseAuthService {
       
       console.log('🔍 DirectSupabaseAuth: Session found for user:', session.user.id);
       
-      // If we have a session, test a simple query
+      // If we have a session, test a simple query using extension_usage table
       const { data, error: queryError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', session.user.id)
+        .from('extension_usage')
+        .select('user_id')
+        .eq('user_id', session.user.id)
         .limit(1);
       
       if (queryError) {

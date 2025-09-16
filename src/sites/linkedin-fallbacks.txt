@@ -1,0 +1,136 @@
+# LinkedIn Fallback Selectors and Debugging Code
+# This file contains selectors and debugging code that can be used as fallbacks
+# but are not included in the main extraction logic to keep it clean and maintainable
+
+## Fallback Job Container Selectors
+# These are additional selectors that can be used if the primary ones fail
+fallback_job_containers = [
+  '.job-card-job-posting-card-wrapper--active', # Active/selected job card
+  '.job-card-job-posting-card-wrapper', # Any job card
+  '.jobs-search__results-list li', # Job listing items
+  '.job-search-card', # Job search card
+  '.jobs-unified-top-card', # Unified job card
+  '[data-job-id]' # Any element with job ID
+]
+
+## Fallback Title Selectors
+fallback_titles = [
+  '.job-card-job-posting-card-wrapper__title strong',
+  '.artdeco-entity-lockup__title strong',
+  'h1[data-test-id="job-title"]',
+  '.job-details-module h1',
+  '.jobs-unified-top-card__job-title a',
+  '.job-details-jobs-unified-top-card__job-title'
+]
+
+## Fallback Company Selectors
+fallback_companies = [
+  '.artdeco-entity-lockup__subtitle',
+  '.job-card-job-posting-card-wrapper__subtitle',
+  '[data-test-id="job-details-company-name"]',
+  '.job-details-module .job-details-jobs-unified-top-card__primary-description a',
+  '.jobs-unified-top-card__company-name a',
+  '.job-details-jobs-unified-top-card__primary-description a'
+]
+
+## Fallback Location Selectors
+fallback_locations = [
+  '.artdeco-entity-lockup__caption',
+  '.job-card-job-posting-card-wrapper__caption',
+  '.job-details-jobs-unified-top-card__bullet',
+  '.jobs-unified-top-card__bullet',
+  '.job-details-jobs-unified-top-card__primary-description .tvm__text--low-emphasis',
+  '[data-test-id="job-details-location"]'
+]
+
+## Fallback Posted Date Selectors
+fallback_posted_dates = [
+  '.job-card-job-posting-card-wrapper__footer-item time',
+  'time[datetime]',
+  '.job-details-jobs-unified-top-card__primary-description time',
+  '.jobs-unified-top-card__subtitle-secondary-grouping time'
+]
+
+## Fallback Applicant Count Selectors
+fallback_applicants = [
+  '.job-card-job-posting-card-wrapper__footer-item .tvm__text--positive',
+  '.job-details-jobs-unified-top-card__job-insight[data-test-id*="applicant"]',
+  '.jobs-unified-top-card__job-insight .jobs-unified-top-card__job-insight-text'
+]
+
+## Fallback Job Type Selectors
+fallback_job_types = [
+  '.artdeco-entity-lockup__caption',
+  '.job-card-job-posting-card-wrapper__caption',
+  '.job-details-preferences-and-skills .job-details-preferences-and-skills__pill',
+  '.job-details-jobs-unified-top-card__job-insight',
+  '[data-test-id="job-type"]'
+]
+
+## Fallback Description Selectors
+fallback_descriptions = [
+  'div[class*="jobs-box__html-content"][class*="jobs-description-content__text--stretch"]',
+  '.jobs-description-content__text--stretch',
+  '.jobs-description__container .jobs-description-content__text',
+  '#job-details',
+  'div[class*="jobs-box__html-content"]',
+  'div[class*="jobs-description-content__text--stretch"]',
+  '.job-details-module__content .jobs-description-content__text',
+  '[data-test-id="job-description"]'
+]
+
+## Fallback Salary Selectors
+fallback_salaries = [
+  '.artdeco-entity-lockup__metadata .tvm__text--low-emphasis',
+  '.job-card-job-posting-card-wrapper__metadata .tvm__text--low-emphasis',
+  '.job-details-preferences-and-skills .job-details-preferences-and-skills__pill',
+  '.job-details-jobs-unified-top-card__job-insight .job-details-jobs-unified-top-card__job-insight-text',
+  '.jobs-unified-top-card__job-insight-text',
+  '[data-test-id="job-salary"]'
+]
+
+## Debugging Code (for troubleshooting)
+debug_containers = '''
+console.log('🔍 LinkedIn: Available containers on page:');
+console.log('  - .job-details-jobs-unified-top-card__container--two-pane:', document.querySelectorAll('.job-details-jobs-unified-top-card__container--two-pane').length);
+console.log('  - .job-details-jobs-unified-top-card:', document.querySelectorAll('.job-details-jobs-unified-top-card').length);
+console.log('  - .jobs-search__job-details--container:', document.querySelectorAll('.jobs-search__job-details--container').length);
+console.log('  - .job-card-job-posting-card-wrapper--active:', document.querySelectorAll('.job-card-job-posting-card-wrapper--active').length);
+console.log('  - .job-card-job-posting-card-wrapper:', document.querySelectorAll('.job-card-job-posting-card-wrapper').length);
+console.log('  - .jobs-search__results-list li:', document.querySelectorAll('.jobs-search__results-list li').length);
+console.log('  - .job-search-card:', document.querySelectorAll('.job-search-card').length);
+console.log('  - .jobs-unified-top-card:', document.querySelectorAll('.jobs-unified-top-card').length);
+console.log('  - [data-job-id]:', document.querySelectorAll('[data-job-id]').length);
+console.log('🔍 LinkedIn: Page URL:', window.location.href);
+console.log('🔍 LinkedIn: Page title:', document.title);
+'''
+
+debug_extraction = '''
+console.log('🔍 LinkedIn: Extracted data:');
+console.log('  - Position:', position);
+console.log('  - Organization:', organization);
+console.log('  - Location:', location);
+console.log('  - Salary:', salaryText);
+console.log('  - Description length:', description.length);
+console.log('  - Job Type:', jobType);
+console.log('  - Environment:', environment);
+console.log('  - Posting Age:', postingAge);
+console.log('  - Applicant Count:', applicantCount);
+'''
+
+debug_preferences = '''
+console.log('🔍 LinkedIn: Parsing job preferences...');
+console.log(`🔍 LinkedIn: Found ${preferenceButtons.length} preference buttons`);
+preferenceButtons.forEach((button, index) => {
+  const text = button.textContent?.toLowerCase() || '';
+  console.log(`🔍 LinkedIn: Button ${index + 1} text: "${text}"`);
+  const cleanText = text.replace(/matches your job preferences.*$/i, '').trim();
+  console.log(`🔍 LinkedIn: Cleaned text: "${cleanText}"`);
+});
+'''
+
+## Usage Notes
+# These fallback selectors can be used when the primary selectors fail
+# They should be added to the main selectors array in order of preference
+# Debugging code can be temporarily added for troubleshooting
+# This keeps the main extraction logic clean and focused on the primary functionality

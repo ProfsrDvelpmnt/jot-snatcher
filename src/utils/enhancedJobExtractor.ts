@@ -116,5 +116,5 @@ export abstract class JobExtractor {
   }
 
   // Abstract method that each site extractor must implement
-  abstract extractJobData(): JobData | null;
+  abstract extractJobData(): JobData | null | Promise<JobData | null>;
 }

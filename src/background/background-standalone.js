@@ -1,5 +1,30 @@
 // Standalone background script for Chrome extension - no imports
 
+// Function to check if user is logged into the webapp
+async function checkWebappAuthentication() {
+  try {
+    // Query the active tab to check for webapp authentication
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || !tab.id) {
+      console.log('🔍 Background: No active tab found for webapp check');
+      return false;
+    }
+
+    // Send message to content script to check webapp login status
+    const response = await chrome.tabs.sendMessage(tab.id, { type: 'CHECK_WEBAPP_LOGIN' });
+    if (response && response.success) {
+      console.log('🔍 Background: Webapp login check result:', response.isLoggedIn);
+      return response.isLoggedIn === true;
+    }
+    
+    console.log('🔍 Background: No response from content script for webapp check');
+    return false;
+  } catch (error) {
+    console.log('🔍 Background: Error checking webapp authentication:', error);
+    return false;
+  }
+}
+
 // Function to get real usage data from database
 async function getRealUsageData(userId, subscriptionInfo) {
   try {
@@ -9,8 +34,8 @@ async function getRealUsageData(userId, subscriptionInfo) {
     const currentMonth = new Date().toISOString().slice(0, 7);
     console.log('📅 Current month:', currentMonth);
     
-    // Make direct fetch request to Supabase REST API
-    const url = `https://aeoyohqyhawxulisdvqj.supabase.co/rest/v1/extension_job_submissions?select=id&user_id=eq.${userId}&usage_month=eq.${currentMonth}`;
+    // Make direct fetch request to Supabase REST API using extension_usage view
+    const url = `https://aeoyohqyhawxulisdvqj.supabase.co/rest/v1/extension_usage?select=usage_count&user_id=eq.${userId}&usage_month=eq.${currentMonth}`;
     
     const response = await fetch(url, {
       headers: {
@@ -21,12 +46,12 @@ async function getRealUsageData(userId, subscriptionInfo) {
     });
     
     if (!response.ok) {
-      console.error('❌ HTTP error querying extension_job_submissions:', response.status);
+      console.error('❌ HTTP error querying extension_usage:', response.status);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
     const data = await response.json();
-    const currentUsage = data?.length || 0;
+    const currentUsage = data?.[0]?.usage_count || 0;
     const monthlyLimit = subscriptionInfo.monthlyLimit || 0;
     const remainingUses = Math.max(0, monthlyLimit - currentUsage);
     
@@ -244,16 +269,64 @@ class DirectSupabaseAuthService {
     return { ...this.authState };
   }
 
+  async getSessionToken() {
+    try {
+      console.log('🔍 DirectSupabaseAuth: Getting session token...');
+      
+      // Get session from Chrome storage
+      const result = await chrome.storage.local.get(['sb-aeoyohqyhawxulisdvqj-auth-token']);
+      const token = result['sb-aeoyohqyhawxulisdvqj-auth-token'];
+      
+      if (!token) {
+        console.log('⚠️ DirectSupabaseAuth: No auth token found in storage');
+        return null;
+      }
+      
+      try {
+        const parsedToken = JSON.parse(token);
+        console.log('🔍 DirectSupabaseAuth: Parsed token structure:', Object.keys(parsedToken));
+        
+        // Check for access_token in currentSession
+        if (parsedToken.currentSession?.access_token) {
+          console.log('✅ DirectSupabaseAuth: Retrieved session token from currentSession');
+          return parsedToken.currentSession.access_token;
+        }
+        
+        // Check for access_token at root level (alternative structure)
+        if (parsedToken.access_token) {
+          console.log('✅ DirectSupabaseAuth: Retrieved session token from root level');
+          return parsedToken.access_token;
+        }
+        
+        // Check for access_token in session object
+        if (parsedToken.session?.access_token) {
+          console.log('✅ DirectSupabaseAuth: Retrieved session token from session object');
+          return parsedToken.session.access_token;
+        }
+        
+        console.log('⚠️ DirectSupabaseAuth: No access_token found in any expected location');
+        console.log('🔍 DirectSupabaseAuth: Available keys in parsed token:', Object.keys(parsedToken));
+        if (parsedToken.currentSession) {
+          console.log('🔍 DirectSupabaseAuth: currentSession keys:', Object.keys(parsedToken.currentSession));
+        }
+        return null;
+      } catch (parseError) {
+        console.error('❌ DirectSupabaseAuth: Error parsing auth token:', parseError);
+        return null;
+      }
+    } catch (error) {
+      console.error('❌ DirectSupabaseAuth: Error getting session token:', error);
+      return null;
+    }
+  }
+
   async testConnection() {
     try {
-      console.log('🔍 DirectSupabaseAuth: Testing Supabase connection...');
-      
       // Test basic connection by checking if we have a valid session
       const result = await chrome.storage.local.get(['sb-aeoyohqyhawxulisdvqj-auth-token']);
       const token = result['sb-aeoyohqyhawxulisdvqj-auth-token'];
       
       if (!token) {
-        console.log('⚠️ DirectSupabaseAuth: No auth token found');
         return false;
       }
       
@@ -269,23 +342,14 @@ class DirectSupabaseAuthService {
             }
           });
           
-          if (testResponse.ok) {
-            console.log('✅ DirectSupabaseAuth: Connection test successful');
-            return true;
-          } else {
-            console.log('❌ DirectSupabaseAuth: Connection test failed - invalid session');
-            return false;
-          }
+          return testResponse.ok;
         }
       } catch (error) {
-        console.log('❌ DirectSupabaseAuth: Connection test failed - invalid token:', error);
         return false;
       }
       
-      console.log('❌ DirectSupabaseAuth: Connection test failed - no session');
       return false;
     } catch (error) {
-      console.error('❌ DirectSupabaseAuth: Connection test failed:', error);
       return false;
     }
   }
@@ -297,6 +361,15 @@ const supabaseAuth = new DirectSupabaseAuthService();
 // Handle messages from content scripts and popup
 console.log('🚀 Background script loaded and message listener registered');
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  // Check if extension context is still valid
+  if (chrome.runtime.lastError) {
+    console.error('❌ Background: Extension context error:', chrome.runtime.lastError.message);
+    if (chrome.runtime.lastError.message.includes('Extension context invalidated')) {
+      console.log('⚠️ Background: Extension context invalidated, cannot process message');
+      return false;
+    }
+  }
+  
   console.log('Background received message:', message);
   console.log('Message type:', message.type);
 
@@ -326,27 +399,20 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
     case 'CHECK_CONNECTION':
       // Check connection using direct Supabase authentication
-      console.log('🔍 Background: Connection check - using direct Supabase authentication');
-      
       (async () => {
         try {
           // Get auth state directly from Supabase
           const authState = supabaseAuth.getAuthState();
-          console.log('🔍 Background: Current auth state:', authState);
           
           // Test Supabase connection
           const isConnected = await supabaseAuth.testConnection();
-          console.log('🔍 Background: Connection test result:', isConnected);
           
           // Get real usage data from database
           let usageData = null;
           if (authState.isAuthenticated && authState.userId && authState.subscriptionInfo) {
             try {
-              console.log('🔍 Background: Getting real usage data from database...');
               usageData = await getRealUsageData(authState.userId, authState.subscriptionInfo);
-              console.log('✅ Background: Real usage data:', usageData);
             } catch (error) {
-              console.error('❌ Background: Failed to get real usage data:', error);
               // Fallback to subscription info
               usageData = {
                 currentMonth: authState.subscriptionInfo.currentUsage || 0,
@@ -359,10 +425,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             }
           }
 
+          // Determine webapp connectivity based on actual webapp authentication
+          const webappConnected = await checkWebappAuthentication();
+
           const response = {
             success: true,
             data: {
-              connected: isConnected,
+              connected: webappConnected,
               jobData: null, // Will be populated when user submits jobs
               usageData: usageData,
               isAuthenticated: authState.isAuthenticated,
@@ -375,7 +444,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             }
           };
           
-          console.log('✅ Background: Connection check result:', response);
           sendResponse(response);
         } catch (error) {
           console.error('❌ Background: Connection check error:', error);
@@ -388,8 +456,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       return true; // Keep message channel open for async response
 
     case 'GET_USAGE_DATA':
-      console.log('🔍 Background: Getting usage data...');
-      
       (async () => {
         try {
           const authState = supabaseAuth.getAuthState();
@@ -407,7 +473,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           // Try to get real usage data from database
           if (authState.subscriptionInfo && authState.userId) {
             try {
-              console.log('🔍 Background: Getting real usage data from database...');
               const realUsageData = await getRealUsageData(authState.userId, authState.subscriptionInfo);
               if (realUsageData) {
                 usageData = {
@@ -418,10 +483,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                   tier: realUsageData.tier,
                   lastUpdated: realUsageData.lastUpdated
                 };
-                console.log('✅ Background: Got real usage data from database:', usageData);
               }
             } catch (error) {
-              console.error('❌ Background: Failed to get real usage data from database:', error);
               // Fall back to subscription info
             }
           }
@@ -436,10 +499,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
               tier: authState.subscriptionInfo.tier,
               lastUpdated: new Date().toISOString()
             };
-            console.log('⚠️ Background: Using fallback subscription info:', usageData);
           }
           
-          console.log('✅ Background: Usage data retrieved:', usageData);
           sendResponse({
             success: true,
             data: usageData
@@ -455,8 +516,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       return true; // Keep message channel open for async response
 
     case 'SUBMIT_JOB':
-      console.log('🔍 Background: Submitting job data...');
-      
       (async () => {
         try {
           const authState = supabaseAuth.getAuthState();
@@ -469,35 +528,318 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             return;
           }
           
-          // Submit job data directly to Supabase
-          const jobResponse = await fetch(`${supabaseAuth.SUPABASE_URL}/rest/v1/jobs`, {
+          if (!message.jobData) {
+            sendResponse({
+              success: false,
+              error: 'No job data provided'
+            });
+            return;
+          }
+          
+          // Get current month for usage tracking
+          const currentMonth = new Date().toISOString().slice(0, 7);
+          
+          // Submit job data to extension_job_submissions table for usage tracking
+          const jobSubmissionData = {
+            user_id: authState.userId,
+            organization: message.jobData.organization || 'Unknown Company',
+            position: message.jobData.position || 'Unknown Position',
+            location: message.jobData.location || null,
+            salary: message.jobData.salary || null,
+            job_type: message.jobData.type || null,
+            environment: message.jobData.environment || null,
+            job_url: message.jobData.link || null,
+            device_info: {
+              userAgent: navigator.userAgent,
+              platform: navigator.platform
+            },
+            browser_info: {
+              name: 'Chrome Extension',
+              version: chrome.runtime.getManifest().version
+            },
+            extension_version: chrome.runtime.getManifest().version,
+            submission_source: 'chrome_extension',
+            usage_month: currentMonth
+          };
+          
+          // Get the user's session token for authenticated requests
+          const sessionToken = await supabaseAuth.getSessionToken();
+          if (!sessionToken) {
+            sendResponse({ success: false, error: 'User not authenticated' });
+            return;
+          }
+          
+          console.log('📤 Background: Submitting to extension_job_submissions table:', jobSubmissionData);
+          console.log('📤 Background: Extension submissions URL:', `${supabaseAuth.SUPABASE_URL}/rest/v1/extension_job_submissions`);
+          
+          const jobResponse = await fetch(`${supabaseAuth.SUPABASE_URL}/rest/v1/extension_job_submissions`, {
             method: 'POST',
             headers: {
               'apikey': supabaseAuth.SUPABASE_ANON_KEY,
-              'Authorization': `Bearer ${supabaseAuth.SUPABASE_ANON_KEY}`,
+              'Authorization': `Bearer ${sessionToken}`,
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-              user_id: authState.userId,
-              position: message.jobData.position,
-              company: message.jobData.company,
-              location: message.jobData.location,
-              url: message.jobData.url,
-              source: message.jobData.source || 'extension'
-            })
+            body: JSON.stringify(jobSubmissionData)
           });
           
+          console.log('📤 Background: Extension submissions response status:', jobResponse.status);
+          console.log('📤 Background: Extension submissions response ok:', jobResponse.ok);
+          
           if (jobResponse.ok) {
-            console.log('✅ Background: Job submitted successfully');
+            console.log('✅ Background: Job successfully submitted to extension_job_submissions table');
+            
+            // Send webapp refresh notification immediately after successful job submission
+            try {
+              const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+              if (tab && tab.id) {
+                await chrome.tabs.sendMessage(tab.id, {
+                  type: 'JOB_ADDED_VIA_EXTENSION',
+                  source: 'chrome-extension',
+                  jobId: 'extension-' + Date.now()
+                });
+                console.log('📤 Background: Sent webapp refresh notification after successful job submission');
+              }
+            } catch (notificationError) {
+              console.log('⚠️ Background: Could not send webapp refresh notification:', notificationError);
+            }
+            
+            // Also submit to main jobs table for webapp display
+            try {
+              const mainJobData = {
+                user_id: authState.userId,
+                position: message.jobData.position || 'Unknown Position',
+                organization: message.jobData.organization || 'Unknown Company',
+                location: message.jobData.location || null,
+                link: message.jobData.link || null,
+                salary: message.jobData.salary || null,
+                type: (message.jobData.type && ['Full Time', 'Part Time', 'Contract', 'Seasonal'].includes(message.jobData.type)) 
+                  ? message.jobData.type 
+                  : 'Full Time',
+                environment: (message.jobData.environment && ['Remote', 'Hybrid', 'In-Person'].includes(message.jobData.environment)) 
+                  ? message.jobData.environment 
+                  : 'Remote',
+                stage: 'Saved',
+                job_source: 'extension',
+                source: message.jobData.source || 'chrome_extension',
+                date_posted: message.jobData.date_posted || null,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              };
+              
+              console.log('📤 Background: Submitting to main jobs table:', mainJobData);
+              console.log('📤 Background: Jobs table URL:', `${supabaseAuth.SUPABASE_URL}/rest/v1/jobs`);
+              
+              const mainJobResponse = await fetch(`${supabaseAuth.SUPABASE_URL}/rest/v1/jobs`, {
+                method: 'POST',
+                headers: {
+                  'apikey': supabaseAuth.SUPABASE_ANON_KEY,
+                  'Authorization': `Bearer ${sessionToken}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(mainJobData)
+              });
+              
+              console.log('📤 Background: Main jobs table response status:', mainJobResponse.status);
+              console.log('📤 Background: Main jobs table response ok:', mainJobResponse.ok);
+              
+              if (mainJobResponse.ok) {
+                console.log('✅ Background: Job successfully submitted to main jobs table');
+              } else {
+                try {
+                  const mainErrorText = await mainJobResponse.text();
+                  console.error('❌ Background: Main jobs table failed with status:', mainJobResponse.status);
+                  console.error('❌ Background: Main jobs table error response:', mainErrorText);
+                  console.error('❌ Background: Main jobs table request data that failed:', mainJobData);
+                } catch (textError) {
+                  console.error('❌ Background: Could not read main jobs table error response text:', textError);
+                }
+              }
+            } catch (mainJobError) {
+              console.error('❌ Background: Error submitting to main jobs table:', mainJobError);
+            }
+            
+            // NEW: Submit to Edge Function for kanban board support
+            try {
+              console.log('📤 Background: Submitting to Edge Function for kanban board...');
+              console.log('📤 Background: Edge Function URL:', `${supabaseAuth.SUPABASE_URL}/functions/v1/add-job-from-extension`);
+              console.log('📤 Background: Session token available:', !!sessionToken);
+              console.log('📤 Background: Original job data from message:', message.jobData);
+              console.log('📤 Background: Original job data organization:', message.jobData.organization);
+              console.log('📤 Background: Original job data position:', message.jobData.position);
+              
+              // Prepare job data for Edge Function (simplified format to match old extension)
+              const edgeFunctionJobData = {
+                organization: message.jobData.organization || 'Unknown Company',
+                position: message.jobData.position || 'Unknown Position',
+                location: message.jobData.location || null,
+                salary: message.jobData.salary || null,
+                type: message.jobData.type || 'Full Time',
+                environment: message.jobData.environment || 'Remote',
+                link: message.jobData.link || null,
+                description: message.jobData.description || null,
+                source: 'extension',
+                user_id: authState.userId
+              };
+              
+              console.log('📤 Background: Edge Function job data:', edgeFunctionJobData);
+              console.log('📤 Background: Edge Function job data organization:', edgeFunctionJobData.organization);
+              console.log('📤 Background: Edge Function job data position:', edgeFunctionJobData.position);
+              console.log('📤 Background: Edge Function job data user_id:', edgeFunctionJobData.user_id);
+              
+              const edgeFunctionResponse = await fetch(`${supabaseAuth.SUPABASE_URL}/functions/v1/add-job-from-extension`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${sessionToken}`,
+                  'apikey': supabaseAuth.SUPABASE_ANON_KEY,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(edgeFunctionJobData)
+              });
+              
+              console.log('📤 Background: Edge Function response status:', edgeFunctionResponse.status);
+              console.log('📤 Background: Edge Function response ok:', edgeFunctionResponse.ok);
+              
+              // Log response headers for debugging
+              console.log('📤 Background: Edge Function response headers:', Object.fromEntries(edgeFunctionResponse.headers.entries()));
+              
+              if (edgeFunctionResponse.ok) {
+                const edgeResult = await edgeFunctionResponse.json();
+                console.log('✅ Background: Job successfully submitted to Edge Function:', edgeResult);
+                // Note: Webapp refresh notification already sent after successful job submission
+              } else {
+                // Log the error details first
+                console.error('❌ Background: Edge Function failed with status:', edgeFunctionResponse.status);
+                console.error('❌ Background: Edge Function response headers:', Object.fromEntries(edgeFunctionResponse.headers.entries()));
+                console.error('❌ Background: Edge Function request data that failed:', edgeFunctionJobData);
+                
+                // Try to get error text
+                try {
+                  const errorText = await edgeFunctionResponse.text();
+                  console.error('❌ Background: Edge Function error response:', errorText);
+                } catch (textError) {
+                  console.error('❌ Background: Could not read error response text:', textError);
+                }
+                
+                // Handle specific error cases
+                if (edgeFunctionResponse.status === 429) {
+                  console.error('❌ Background: Edge Function rate limited (429). Job was still submitted to extension_job_submissions table.');
+                } else if (edgeFunctionResponse.status === 401) {
+                  console.error('❌ Background: Edge Function authentication failed (401). Check session token.');
+                } else if (edgeFunctionResponse.status === 500) {
+                  console.error('❌ Background: Edge Function server error (500). Check Edge Function logs.');
+                  console.log('🔍 Background: This is a server-side issue with the Edge Function, not your extension.');
+                  console.log('ℹ️ Background: Your job was still saved to the main jobs table successfully.');
+                } else if (edgeFunctionResponse.status === 400) {
+                  console.error('❌ Background: Edge Function bad request (400). Check data format.');
+                  console.log('🔍 Background: The job data format may be incorrect for the Edge Function.');
+                  console.log('ℹ️ Background: Your job was still saved to the main jobs table successfully.');
+                }
+                
+                // FALLBACK: Try direct Edge Function call like the old extension
+                console.log('🔄 Background: Attempting fallback Edge Function call...');
+                try {
+                  const fallbackResponse = await fetch(`${supabaseAuth.SUPABASE_URL}/functions/v1/add-job-from-extension`, {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': `Bearer ${sessionToken}`,
+                      'apikey': supabaseAuth.SUPABASE_ANON_KEY,
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(edgeFunctionJobData)
+                  });
+                  
+                  if (fallbackResponse.ok) {
+                    const fallbackResult = await fallbackResponse.json();
+                    console.log('✅ Background: Fallback Edge Function call successful:', fallbackResult);
+                    // Note: Webapp refresh notification already sent after successful job submission
+                  } else {
+                    const fallbackErrorText = await fallbackResponse.text();
+                    console.error('❌ Background: Fallback Edge Function call also failed:', fallbackResponse.status, fallbackErrorText);
+                    console.error('❌ Background: Fallback request data that failed:', edgeFunctionJobData);
+                    console.log('🔍 Background: Edge Function is experiencing server-side issues.');
+                    console.log('ℹ️ Background: Your job was successfully saved to the main jobs table and will appear on your kanban board.');
+                    
+                    // Note: Webapp refresh notification already sent after successful job submission
+                  }
+                } catch (fallbackError) {
+                  console.error('❌ Background: Fallback Edge Function call error:', fallbackError);
+                  console.log('🔍 Background: Edge Function is experiencing server-side issues.');
+                  console.log('ℹ️ Background: Your job was successfully saved to the main jobs table and will appear on your kanban board.');
+                }
+              }
+            } catch (edgeFunctionError) {
+              console.error('❌ Background: Error submitting to Edge Function:', edgeFunctionError);
+              console.error('❌ Background: Edge Function error details:', {
+                name: edgeFunctionError.name,
+                message: edgeFunctionError.message,
+                stack: edgeFunctionError.stack
+              });
+            }
+            
+            // Refresh usage data after successful job submission
+            try {
+              console.log('🔄 Background: Refreshing usage data after successful job submission...');
+              // Trigger usage data refresh by updating auth state
+              await supabaseAuth.refreshUserData();
+              console.log('✅ Background: Usage data refreshed successfully');
+            } catch (refreshError) {
+              console.log('⚠️ Background: Could not refresh usage data:', refreshError);
+            }
+            
             sendResponse({
               success: true,
-              data: { message: 'Job submitted successfully' }
+              data: { 
+                message: 'Job submitted successfully',
+                usageIncremented: true,
+                currentMonth: currentMonth
+              }
             });
           } else {
-            console.error('❌ Background: Job submission failed:', jobResponse.status);
+            const errorText = await jobResponse.text();
+            console.error('❌ Background: Extension job submission failed:', jobResponse.status, errorText);
+            console.error('❌ Background: Extension submissions request data that failed:', jobSubmissionData);
+            
+            // Still try to submit to main jobs table even if extension submission fails
+            try {
+              console.log('🔄 Background: Attempting main jobs table submission despite extension submission failure...');
+              const mainJobData = {
+                user_id: authState.userId,
+                title: message.jobData.position || 'Unknown Position',
+                position: message.jobData.position || 'Unknown Position',
+                organization: message.jobData.organization || 'Unknown Company',
+                location: message.jobData.location || null,
+                url: message.jobData.link || null,
+                source: message.jobData.source || 'chrome_extension',
+                salary: message.jobData.salary || null,
+                environment: message.jobData.environment || null,
+                status: 'applied',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              };
+              
+              const mainJobResponse = await fetch(`${supabaseAuth.SUPABASE_URL}/rest/v1/jobs`, {
+                method: 'POST',
+                headers: {
+                  'apikey': supabaseAuth.SUPABASE_ANON_KEY,
+                  'Authorization': `Bearer ${sessionToken}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(mainJobData)
+              });
+              
+              if (mainJobResponse.ok) {
+                console.log('✅ Background: Job successfully submitted to main jobs table (fallback)');
+              } else {
+                const mainErrorText = await mainJobResponse.text();
+                console.error('❌ Background: Failed to submit to main jobs table (fallback):', mainJobResponse.status, mainErrorText);
+              }
+            } catch (mainJobError) {
+              console.error('❌ Background: Error submitting to main jobs table (fallback):', mainJobError);
+            }
+            
             sendResponse({
               success: false,
-              error: `Job submission failed: ${jobResponse.status}`
+              error: `Extension job submission failed: ${jobResponse.status} - ${errorText}`
             });
           }
         } catch (error) {
@@ -540,11 +882,42 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           // Always extract job data regardless of authentication status
           // Authentication will be checked when trying to send data or generate PDF
           
-          // For now, just return success - actual job extraction would happen here
+          // Get the active tab to send message to content script
+          const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+          
+          if (!tab || !tab.id) {
+            console.error('❌ Background: No active tab found');
+            sendResponse({
+              success: false,
+              error: 'No active tab found'
+            });
+            return;
+          }
+          
+          // Send message to content script to extract job data
+          try {
+            const response = await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_JOB_DATA' });
+            
+            if (response && response.success) {
+              console.log('✅ Background: Job data extracted from content script:', response.data);
           sendResponse({
             success: true,
-            data: { message: 'Job extraction would happen here' }
-          });
+                data: response.data
+              });
+            } else {
+              console.log('⚠️ Background: Content script extraction failed:', response?.error);
+              sendResponse({
+                success: false,
+                error: response?.error || 'Content script extraction failed'
+              });
+            }
+          } catch (contentScriptError) {
+            console.error('❌ Background: Error communicating with content script:', contentScriptError);
+            sendResponse({
+              success: false,
+              error: 'Failed to communicate with content script'
+            });
+          }
         } catch (error) {
           console.error('❌ Background: Failed to extract job data:', error);
           sendResponse({

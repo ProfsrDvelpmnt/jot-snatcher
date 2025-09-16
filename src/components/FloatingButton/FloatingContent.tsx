@@ -24,6 +24,8 @@ export const FloatingContent: React.FC<FloatingContentProps> = ({ onMinimize }) 
     usageData,
     isConnected,
     isLoading,
+    successMessage,
+    setSuccessMessage,
     collectJobData,
     exportJobData,
     sendJobData,
@@ -47,6 +49,8 @@ export const FloatingContent: React.FC<FloatingContentProps> = ({ onMinimize }) 
             onClear={clearJobData}
             onUpdate={updateJobData}
             isLoading={isLoading}
+            successMessage={successMessage}
+            setSuccessMessage={setSuccessMessage}
           />
         );
       case 'description':

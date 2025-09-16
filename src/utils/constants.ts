@@ -23,7 +23,7 @@ export const JOB_FIELDS = [
   { key: 'position', label: 'Position' },
   { key: 'link', label: 'Job Link' },
   { key: 'salary', label: 'Salary' },
-  { key: 'salary_type', label: 'Salary Type' },
+  { key: 'salaryTypeDisplay', label: 'Salary Type' },
   { key: 'location', label: 'Location' },
   { key: 'type', label: 'Job Type' },
   { key: 'environment', label: 'Environment' },

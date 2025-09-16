@@ -5,7 +5,7 @@ import { extractionManager } from '@/extractors';
 import { JobData } from '@/types';
 
 export class ExtractorDebugger {
-  static debugExtraction(siteName: string) {
+  static async debugExtraction(siteName: string) {
     console.group(`🔍 Debugging ${siteName} Extraction`);
     
     const site = detectSite(window.location.href);
@@ -34,7 +34,7 @@ export class ExtractorDebugger {
     // Test extraction
     console.group('🎯 Extraction Testing');
     try {
-      const jobData = extractionManager.extractCurrentJob();
+      const jobData = await extractionManager.extractCurrentJob();
       
       if (jobData) {
         console.log('✅ Extraction successful');
@@ -123,11 +123,11 @@ export class ExtractorDebugger {
   }
   
   // Generate test report
-  static generateTestReport(): string {
+  static async generateTestReport(): Promise<string> {
     const site = detectSite(window.location.href);
     if (!site) return 'No supported site detected';
     
-    const jobData = extractionManager.extractCurrentJob();
+    const jobData = await extractionManager.extractCurrentJob();
     
     const report = {
       url: window.location.href,

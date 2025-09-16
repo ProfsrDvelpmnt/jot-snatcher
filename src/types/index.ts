@@ -7,6 +7,7 @@ export interface JobData {
   link: string;
   salary: string;
   salary_type: 'annual' | 'hourly' | 'monthly' | 'contract';
+  salaryTypeDisplay?: string; // Capitalized version for display
   salary_min: number | null;
   salary_max: number | null;
   location: string;
@@ -33,6 +34,7 @@ export interface JobData {
   date_negotiating?: string | null;
   date_hired?: string | null;
   date_archived?: string | null;
+  
   
   // Legacy fields for backward compatibility
   jobId?: string;

@@ -37,6 +37,9 @@ export const IframeContent: React.FC = () => {
   
   // Supabase connection status
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
+  
+  // Track if user has explicitly signed out to prevent quick re-authentication
+  const [hasExplicitlySignedOut, setHasExplicitlySignedOut] = useState(false);
 
   // Listen for theme changes and authentication data from content script
   React.useEffect(() => {
@@ -52,7 +55,14 @@ export const IframeContent: React.FC = () => {
           userId: event.data.authState?.userId,
           subscriptionInfo: event.data.authState?.subscriptionInfo
         });
-        setAuthState(event.data.authState);
+        // Only update auth state if we're not in a sign-out state OR if the new state shows authentication
+        // Also respect the explicit sign-out flag
+        if ((!authState.requiresLogin || event.data.authState.isAuthenticated) && !hasExplicitlySignedOut) {
+          console.log('📊 Iframe: Updating auth state from content script');
+          setAuthState(event.data.authState);
+        } else {
+          console.log('📊 Iframe: Skipping auth state update from content script - user is signed out or explicitly signed out');
+        }
       } else if (event.data.type === 'SIGN_OUT') {
         console.log('📨 Iframe: Received sign out message from content script');
         console.log('🔄 Iframe: Calling handleSignOut...');
@@ -77,12 +87,13 @@ export const IframeContent: React.FC = () => {
       
       // Only update state if we're not in a sign-out state
       // This prevents the listener from overriding the sign-out state
-      if (!authState.requiresLogin || newAuthState.isAuthenticated) {
+      // Also respect the explicit sign-out flag
+      if ((!authState.requiresLogin || newAuthState.isAuthenticated) && !hasExplicitlySignedOut) {
         console.log('📊 Iframe: Updating auth state from listener');
         setAuthState(newAuthState);
         setIsSupabaseConnected(newAuthState.isAuthenticated);
       } else {
-        console.log('📊 Iframe: Skipping auth state update - user is signed out');
+        console.log('📊 Iframe: Skipping auth state update - user is signed out or explicitly signed out');
       }
       
       // Only send messages if this is a significant state change
@@ -135,6 +146,8 @@ export const IframeContent: React.FC = () => {
     userName,
     userId,
     isAuthenticated,
+    successMessage,
+    setSuccessMessage,
     collectJobData,
     exportJobData,
     sendJobData,
@@ -162,6 +175,9 @@ export const IframeContent: React.FC = () => {
       console.log('🔄 Iframe: User requested sign out');
       console.log('🔍 Iframe: Current auth state before sign out:', authState);
       console.log('🔍 Iframe: Current Supabase connection status:', isSupabaseConnected);
+      
+      // Set flag to prevent quick re-authentication
+      setHasExplicitlySignedOut(true);
       
       // Immediately clear all states first - don't wait for Supabase sign out
       console.log('🔄 Iframe: Immediately clearing all states');
@@ -209,6 +225,8 @@ export const IframeContent: React.FC = () => {
             onClear={clearJobData}
             onUpdate={updateJobData}
             isLoading={isLoading}
+            successMessage={successMessage}
+            setSuccessMessage={setSuccessMessage}
           />
         );
       case 'description':
@@ -225,11 +243,11 @@ export const IframeContent: React.FC = () => {
 
   return (
     <div className="w-popup h-popup bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text transition-all duration-300 flex flex-col overflow-hidden">
-      {/* Header is now handled by content script iframe container */} b
+      {/* Header is now handled by content script iframe container */}
       
       {/* Show login form if not authenticated */}
       {authState.requiresLogin ? (
-        <LoginForm />
+        <LoginForm onResetSignOutFlag={() => setHasExplicitlySignedOut(false)} />
       ) : (
         <>
           <TabContainer

@@ -8,7 +8,9 @@ import {
   ZipRecruiterExtractor, 
   GreenhouseExtractor, 
   HiringCafeExtractor, 
-  IndeedExtractor 
+  IndeedExtractor,
+  WorkdayExtractor,
+  TheLaddersExtractor
 } from '@/sites';
 
 export class ExtractionManager {
@@ -26,12 +28,14 @@ export class ExtractionManager {
     this.extractors.set('greenhouse', new GreenhouseExtractor());
     this.extractors.set('hiring-cafe', new HiringCafeExtractor());
     this.extractors.set('indeed', new IndeedExtractor());
+    this.extractors.set('workday', new WorkdayExtractor());
+    this.extractors.set('theladders', new TheLaddersExtractor());
     
     console.log('Initialized extractors for all supported sites');
   }
 
   // Extract job data from current page
-  extractCurrentJob(): JobData | null {
+  async extractCurrentJob(): Promise<JobData | null> {
     const currentSite = detectSite(window.location.href);
     
     if (!currentSite) {
@@ -49,7 +53,10 @@ export class ExtractionManager {
 
     try {
       console.log(`Extracting job data from ${currentSite.name}...`);
-      const jobData = extractor.extractJobData();
+      const jobDataResult = extractor.extractJobData();
+      
+      // Handle both sync and async extractors
+      const jobData = jobDataResult instanceof Promise ? await jobDataResult : jobDataResult;
       
       if (jobData) {
         console.log('Job data extracted successfully:', jobData);
@@ -65,7 +72,7 @@ export class ExtractionManager {
   }
 
   // Extract all jobs from current page (for job listing pages)
-  extractAllJobs(): JobData[] {
+  async extractAllJobs(): Promise<JobData[]> {
     const currentSite = detectSite(window.location.href);
     
     if (!currentSite) {
@@ -84,7 +91,8 @@ export class ExtractionManager {
     try {
       // For now, just return the current job as a single-item array
       // This can be enhanced later for job listing pages
-      const jobData = extractor.extractJobData();
+      const jobDataResult = extractor.extractJobData();
+      const jobData = jobDataResult instanceof Promise ? await jobDataResult : jobDataResult;
       return jobData ? [jobData] : [];
     } catch (error) {
       console.error('Error extracting job data:', error);
@@ -128,6 +136,8 @@ export class ExtractionManager {
     if (domain.includes('greenhouse')) return 'greenhouse';
     if (domain.includes('hiring.cafe')) return 'hiring-cafe';
     if (domain.includes('indeed')) return 'indeed';
+    if (domain.includes('myworkdayjobs')) return 'workday';
+    if (domain.includes('theladders')) return 'theladders';
     return domain;
   }
 

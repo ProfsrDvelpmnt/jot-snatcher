@@ -10,6 +10,8 @@ interface JobDetailsProps {
   onClear: () => void;
   onUpdate: (updatedData: JobData) => void;
   isLoading: boolean;
+  successMessage?: string | null;
+  setSuccessMessage?: (message: string | null) => void;
 }
 
 export const JobDetails: React.FC<JobDetailsProps> = ({
@@ -20,6 +22,8 @@ export const JobDetails: React.FC<JobDetailsProps> = ({
   onClear,
   onUpdate,
   isLoading,
+  successMessage,
+  setSuccessMessage,
 }) => {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>('');
@@ -47,6 +51,49 @@ export const JobDetails: React.FC<JobDetailsProps> = ({
   };
   return (
     <div className="px-4">
+      {/* Success/Error Message Popup Overlay */}
+      {successMessage && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+          <div className={`bg-white dark:bg-gray-800 rounded-xl p-8 mx-4 max-w-md w-full text-center shadow-2xl ${
+            successMessage.includes('✅') || successMessage.includes('🎉')
+              ? 'border-2 border-green-500'
+              : 'border-2 border-red-500'
+          }`}>
+            <div className={`text-6xl mb-4 ${
+              successMessage.includes('✅') || successMessage.includes('🎉')
+                ? 'text-green-500'
+                : 'text-red-500'
+            }`}>
+              {successMessage.includes('✅') || successMessage.includes('🎉') ? '🎉' : '❌'}
+            </div>
+            <h3 className={`text-xl font-bold mb-2 ${
+              successMessage.includes('✅') || successMessage.includes('🎉')
+                ? 'text-green-800 dark:text-green-200'
+                : 'text-red-800 dark:text-red-200'
+            }`}>
+              {successMessage.includes('✅') || successMessage.includes('🎉') ? 'Success!' : 'Error!'}
+            </h3>
+            <p className={`text-sm ${
+              successMessage.includes('✅') || successMessage.includes('🎉')
+                ? 'text-green-700 dark:text-green-300'
+                : 'text-red-700 dark:text-red-300'
+            }`}>
+              {successMessage}
+            </p>
+            <button
+              onClick={() => setSuccessMessage?.(null)}
+              className={`mt-6 px-6 py-2 rounded-lg font-semibold transition-all duration-200 hover:shadow-lg ${
+                successMessage.includes('✅') || successMessage.includes('🎉')
+                  ? 'bg-green-500 hover:bg-green-600 text-white'
+                  : 'bg-red-500 hover:bg-red-600 text-white'
+              }`}
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
+      
       <div className="flex gap-2 mb-4">
         <button
           onClick={onCollect}

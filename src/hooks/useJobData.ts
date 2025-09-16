@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { JobSubmission, UsageData } from '../services/api';
 import { supabaseAuth } from '../services/supabaseAuth';
+import { PDFExporter } from '../utils/pdfExporter';
 
 export const useJobData = () => {
   const [jobData, setJobData] = useState<JobSubmission | null>(null);
@@ -11,6 +12,7 @@ export const useJobData = () => {
   const [usageData, setUsageData] = useState<UsageData | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     // Listen for auth state changes from content script
@@ -209,24 +211,34 @@ export const useJobData = () => {
     }
   };
 
-  const exportJobData = () => {
+  const exportJobData = async () => {
     if (!jobData) {
       console.log('⚠️ No job data to export');
       return;
     }
 
     try {
-      const dataStr = JSON.stringify(jobData, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(dataBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `job-data-${new Date().toISOString().split('T')[0]}.json`;
-      link.click();
-      URL.revokeObjectURL(url);
-      console.log('✅ Job data exported');
+      console.log('🚀 Starting PDF export...');
+      await PDFExporter.exportJobDataAsPDF(jobData);
+      console.log('✅ Job data exported as PDF');
     } catch (error) {
-      console.error('❌ Error exporting job data:', error);
+      console.error('❌ Error exporting job data as PDF:', error);
+      
+      // Fallback to JSON export if PDF fails
+      try {
+        console.log('🔄 Falling back to JSON export...');
+        const dataStr = JSON.stringify(jobData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `job-data-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+        console.log('✅ Job data exported as JSON (fallback)');
+      } catch (fallbackError) {
+        console.error('❌ Error with JSON fallback export:', fallbackError);
+      }
     }
   };
 
@@ -245,16 +257,30 @@ export const useJobData = () => {
     try {
       console.log('📤 Sending job data...');
       const result = await chrome.runtime.sendMessage({ 
-        type: 'SEND_JOB_DATA', 
-        data: jobData 
+        type: 'SUBMIT_JOB', 
+        jobData: jobData 
       });
       
       if (result.success) {
         console.log('✅ Job data sent successfully');
-        // Optionally clear job data after successful send
-        // setJobData(null);
+        // Clear job data after successful send
+        setJobData(null);
+        // Force refresh of auth state to get updated usage data
+        await chrome.runtime.sendMessage({ type: 'CHECK_CONNECTION' });
+        // Wait a moment for database to be updated, then refresh usage data
+        setTimeout(async () => {
+          await refreshUsageData();
+        }, 1000);
+        // Show success message
+        setSuccessMessage('🎉 Job submitted successfully! Form cleared and usage updated.');
+        // Clear success message after 8 seconds (longer for popup)
+        setTimeout(() => setSuccessMessage(null), 8000);
+        console.log('🎉 Job submitted successfully! Form cleared and usage updated.');
       } else {
         console.log('❌ Failed to send job data:', result.error);
+        setSuccessMessage(`❌ Failed to submit job: ${result.error}`);
+        // Clear error message after 8 seconds (longer for popup)
+        setTimeout(() => setSuccessMessage(null), 8000);
       }
     } catch (error) {
       console.error('❌ Error sending job data:', error);
@@ -307,6 +333,8 @@ export const useJobData = () => {
     requiresLogin,
     userName,
     userId,
+    successMessage,
+    setSuccessMessage,
     collectJobData,
     exportJobData,
     sendJobData,

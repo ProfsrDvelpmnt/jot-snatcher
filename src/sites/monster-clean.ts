@@ -130,7 +130,6 @@ export class MonsterExtractor extends JobExtractor {
       link: jobUrl,
       salary: parsedSalary.salary,
       salary_type: parsedSalary.salary_type,
-      salaryTypeDisplay: this.capitalizeSalaryType(parsedSalary.salary_type),
       salary_min: parsedSalary.salary_min,
       salary_max: parsedSalary.salary_max,
       location: location || 'Not specified',
@@ -513,21 +512,5 @@ export class MonsterExtractor extends JobExtractor {
     }
 
     return descriptionData;
-  }
-
-  // Capitalize salary type to match other job fields
-  private capitalizeSalaryType(salaryType: string): string {
-    switch (salaryType.toLowerCase()) {
-      case 'annual':
-        return 'Annual';
-      case 'hourly':
-        return 'Hourly';
-      case 'monthly':
-        return 'Monthly';
-      case 'contract':
-        return 'Contract';
-      default:
-        return 'Annual'; // Default fallback
-    }
   }
 }

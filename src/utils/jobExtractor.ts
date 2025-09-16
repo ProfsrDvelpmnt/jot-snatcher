@@ -4,6 +4,7 @@ import { JobData } from '@/types';
 import { parseSalary, formatWorkType, formatEnvironment } from './salaryParser';
 import { detectJobSite } from './jobSiteDetector';
 import { convertToKanbanFormat, validateKanbanJobData } from './kanbanSchema';
+import { cleanJobUrl } from './urlCleaner';
 
 export class JobExtractor {
   private config: SiteConfig;
@@ -53,7 +54,7 @@ export class JobExtractor {
         // Core job information
         organization: companyName,
         position: jobTitle,
-        link: window.location.href,
+        link: cleanJobUrl(window.location.href),
         salary: parsedSalary.salary,
         salary_type: parsedSalary.salary_type,
         salary_min: parsedSalary.salary_min,
@@ -70,7 +71,7 @@ export class JobExtractor {
         date_posted: datePosted,
         
         // Optional fields (set to null for now)
-        job_posting_url: window.location.href,
+        job_posting_url: cleanJobUrl(window.location.href),
         resume_url: null,
         contact_message_url: null,
         interview_status: null,
@@ -86,7 +87,7 @@ export class JobExtractor {
         // Legacy fields for backward compatibility
         jobId: this.generateJobId(),
         companyName: companyName,
-        jobLink: window.location.href,
+        jobLink: cleanJobUrl(window.location.href),
         jobTitle: jobTitle,
         workType: workTypeText,
         ageOfPosting: postedDateText,

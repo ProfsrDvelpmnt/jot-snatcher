@@ -20,13 +20,13 @@ export function parseSalary(salaryText: string | null | undefined): ParsedSalary
   const cleanText = salaryText.replace(/[$,\s]/g, '').toLowerCase();
   
   // Annual salary patterns
-  if (cleanText.includes('per year') || cleanText.includes('annually') || 
-      cleanText.includes('yearly') || 
-      (cleanText.match(/\d+k?\s*-\s*\d+k?/) && !cleanText.includes('hour') && !cleanText.includes('month'))) {
-    const numbers = cleanText.match(/\d+/g);
+  if (cleanText.includes('per year') || cleanText.includes('a year') || cleanText.includes('annually') || 
+      cleanText.includes('yearly') || cleanText.includes('/yr') ||
+      (cleanText.match(/\d+(?:\.\d+)?k?\s*-\s*\d+(?:\.\d+)?k?/) && !cleanText.includes('hour') && !cleanText.includes('month'))) {
+    const numbers = cleanText.match(/(\d+(?:\.\d+)?)/g);
     if (numbers && numbers.length >= 2) {
-      const min = parseInt(numbers[0]) * (numbers[0].length <= 3 ? 1000 : 1);
-      const max = parseInt(numbers[1]) * (numbers[1].length <= 3 ? 1000 : 1);
+      const min = parseFloat(numbers[0]) * (numbers[0].length <= 3 ? 1000 : 1);
+      const max = parseFloat(numbers[1]) * (numbers[1].length <= 3 ? 1000 : 1);
       return {
         salary: originalText,
         salary_type: 'annual',
@@ -89,28 +89,68 @@ export function parseSalary(salaryText: string | null | undefined): ParsedSalary
     }
   }
   
-  // Try to extract range from common patterns
-  const rangeMatch = cleanText.match(/(\d+)\s*-\s*(\d+)/);
+  // Try to extract range from common patterns (including decimals)
+  const rangeMatch = cleanText.match(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)/);
   if (rangeMatch) {
-    const min = parseInt(rangeMatch[1]) * (rangeMatch[1].length <= 3 ? 1000 : 1);
-    const max = parseInt(rangeMatch[2]) * (rangeMatch[2].length <= 3 ? 1000 : 1);
+    const min = parseFloat(rangeMatch[1]);
+    const max = parseFloat(rangeMatch[2]);
+    
+    // Determine if this is likely hourly or annual based on the values
+    let salaryType: 'annual' | 'hourly' | 'monthly' | 'contract' = 'annual';
+    
+    // If the range is small (under 200), it's likely hourly
+    if (max < 200) {
+      salaryType = 'hourly';
+    }
+    // If the range is very large (over 100,000), it's likely annual
+    else if (min > 100000) {
+      salaryType = 'annual';
+    }
+    // If the range is medium (200-100,000), check for common hourly patterns
+    else if (min >= 10 && max <= 100) {
+      salaryType = 'hourly';
+    }
+    // If the range is very small (under 50), it's definitely hourly
+    else if (max < 50) {
+      salaryType = 'hourly';
+    }
+    
     return {
       salary: originalText,
-      salary_type: 'annual', // Default to annual
-      salary_min: min,
-      salary_max: max
+      salary_type: salaryType,
+      salary_min: salaryType === 'hourly' ? min : min * (min.toString().length <= 3 ? 1000 : 1),
+      salary_max: salaryType === 'hourly' ? max : max * (max.toString().length <= 3 ? 1000 : 1)
     };
   }
   
-  // Single number patterns
-  const singleNumberMatch = cleanText.match(/(\d+)/);
+  // Single number patterns (including decimals)
+  const singleNumberMatch = cleanText.match(/(\d+(?:\.\d+)?)/);
   if (singleNumberMatch) {
-    const value = parseInt(singleNumberMatch[1]) * (singleNumberMatch[1].length <= 3 ? 1000 : 1);
+    const value = parseFloat(singleNumberMatch[1]);
+    
+    // Determine if this is likely hourly or annual based on the value
+    let salaryType: 'annual' | 'hourly' | 'monthly' | 'contract' = 'annual';
+    
+    // If the value is small (under 200), it's likely hourly
+    if (value < 200) {
+      salaryType = 'hourly';
+    }
+    // If the value is very large (over 100,000), it's likely annual
+    else if (value > 100000) {
+      salaryType = 'annual';
+    }
+    // If the value is medium (200-100,000), check for common hourly patterns
+    else if (value >= 10 && value <= 100) {
+      salaryType = 'hourly';
+    }
+    
+    const adjustedValue = salaryType === 'hourly' ? value : value * (value.toString().length <= 3 ? 1000 : 1);
+    
     return {
       salary: originalText,
-      salary_type: 'annual', // Default to annual
-      salary_min: value,
-      salary_max: value
+      salary_type: salaryType,
+      salary_min: adjustedValue,
+      salary_max: adjustedValue
     };
   }
   

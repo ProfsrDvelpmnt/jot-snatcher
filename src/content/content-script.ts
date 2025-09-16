@@ -1,6 +1,4 @@
 
-
-
 // Content script for JOT Snatcher Chrome Extension
 console.log('🚀 JOT Snatcher content script loaded');
 
@@ -186,8 +184,8 @@ const stopDrag = (iframe: HTMLElement) => {
 };
 
 // Update iframe header with user information
-async function updateIframeHeader(userName: string | null, userEmail: string | null, isWebappLoggedIn: boolean = false) {
-  console.log('🔍 Content script: updateIframeHeader called with:', { userName, userEmail, isWebappLoggedIn });
+async function updateIframeHeader(userName: string | null, userEmail: string | null, isWebappConnected: boolean = false) {
+  console.log('🔍 Content script: updateIframeHeader called with:', { userName, userEmail, isWebappConnected });
   
   // Check Supabase connection status
   const isSupabaseConnected = await checkSupabaseConnection();
@@ -238,8 +236,8 @@ async function updateIframeHeader(userName: string | null, userEmail: string | n
   console.log('🔍 Content script: Found title section, updating...');
   
   // Always create the userName element, even if empty
-  const webappStatus = isWebappLoggedIn ? 'Connected to SP-JOT' : 'Not Connected to SP-JOT';
-  const webappColor = isWebappLoggedIn ? 'rgba(34, 197, 94, 0.9)' : 'rgba(239, 68, 68, 0.9)';
+  const webappStatus = isWebappConnected ? 'Connected to SP-JOT' : 'Not Connected to SP-JOT';
+  const webappColor = isWebappConnected ? 'rgba(34, 197, 94, 0.9)' : 'rgba(239, 68, 68, 0.9)';
   const supabaseStatus = isSupabaseConnected ? 'Supabase Connected' : 'Supabase Disconnected';
   const supabaseColor = isSupabaseConnected ? 'rgba(34, 197, 94, 0.9)' : 'rgba(239, 68, 68, 0.9)';
   
@@ -263,8 +261,16 @@ async function updateIframeHeader(userName: string | null, userEmail: string | n
       userNameElement.style.color = 'rgba(255, 255, 255, 0.9)';
       console.log('✅ Content script: Updated iframe header with user name:', userName);
     }
-  } else {
-    console.log('✅ Content script: Reset iframe header to default');
+  }
+
+  // Send webapp connection status update to iframe content
+  const iframeElement = iframe.querySelector('iframe') as HTMLIFrameElement;
+  if (iframeElement && iframeElement.contentWindow) {
+    console.log('📤 Content script: Sending webapp connection status to iframe:', isWebappConnected);
+    iframeElement.contentWindow.postMessage({
+      type: 'WEBAPP_CONNECTION_UPDATE',
+      isWebappConnected: isWebappConnected
+    }, '*');
   }
 }
 
@@ -333,12 +339,15 @@ function openIframePanel() {
 
   console.log('Creating iframe panel...');
 
+  // Detect persistent banner and get optimal position for iframe
+  const { top: iframeTop, zIndex: iframeZIndex } = detectPersistentBannerAndGetPosition();
+
   // Create iframe container
   const iframeContainer = document.createElement('div');
   iframeContainer.id = 'jot-snatcher-iframe';
   iframeContainer.style.cssText = `
     position: fixed;
-    top: 20px;
+    top: ${iframeTop};
     right: 20px;
     width: 520px;
     height: 720px;
@@ -347,7 +356,7 @@ function openIframePanel() {
     border: 2px solid #ba745f;
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    z-index: 10001;
+    z-index: ${parseInt(iframeZIndex) + 1};
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     overflow: hidden;
     display: flex;
@@ -692,7 +701,8 @@ function openIframePanel() {
         console.log('📤 Content script: Sending Supabase auth state to iframe:', supabaseAuthData);
         
         // Update iframe header with real user data
-        await updateIframeHeader(supabaseAuthData.userName || null, supabaseAuthData.userEmail || null, true);
+        const isWebappLoggedIn = await checkWebappLogin();
+        await updateIframeHeader(supabaseAuthData.userName || null, supabaseAuthData.userEmail || null, isWebappLoggedIn);
         updateIframeSignOutButton(true);
         
         if (iframe.contentWindow) {
@@ -755,7 +765,8 @@ function openIframePanel() {
       const supabaseAuthData = await getSupabaseAuthData();
       if (supabaseAuthData) {
         // Update iframe header with user name
-        await updateIframeHeader(supabaseAuthData.userName || null, supabaseAuthData.userEmail || null, true);
+        const isWebappLoggedIn = await checkWebappLogin();
+        await updateIframeHeader(supabaseAuthData.userName || null, supabaseAuthData.userEmail || null, isWebappLoggedIn);
         updateIframeSignOutButton(true);
         
         if (iframe.contentWindow) {
@@ -912,6 +923,205 @@ function closeIframePanel() {
   }
 }
 
+// Detect persistent banners and calculate optimal button position
+function detectPersistentBannerAndGetPosition(): { top: string; zIndex: string } {
+  console.log('🔍 detectPersistentBannerAndGetPosition: Starting detection...');
+  
+  const commonBannerSelectors = [
+    // TheLadders.com specific selectors
+    '.desktop-container',
+    '.search-component-container',
+    '.search-input-container',
+    '.search-input-container-row',
+    
+    // Generic banner selectors
+    'header',
+    '.header',
+    '.banner',
+    '.top-banner',
+    '.persistent-banner',
+    '.fixed-header',
+    '.sticky-header',
+    '.navbar',
+    '.navigation',
+    '.nav-bar',
+    '[role="banner"]',
+    '.site-header',
+    '.main-header',
+    '.page-header',
+    '.top-bar',
+    '.promo-banner',
+    '.announcement-banner',
+    '.cookie-banner',
+    '.notification-banner'
+  ];
+
+  let bannerHeight = 0;
+  let bannerZIndex = 0;
+  let foundBanner = false;
+  
+  console.log('🔍 Checking for TheLadders.com banner elements...');
+
+  // Check for TheLadders.com specific banner structure first
+  const theladdersBanner = document.querySelector('.desktop-container');
+  console.log('🔍 TheLadders banner element found:', theladdersBanner);
+  
+  if (theladdersBanner) {
+    const rect = theladdersBanner.getBoundingClientRect();
+    const style = window.getComputedStyle(theladdersBanner);
+    const elementZIndex = parseInt(style.zIndex) || 0;
+    
+    console.log('🔍 TheLadders banner rect:', rect);
+    console.log('🔍 TheLadders banner style:', {
+      position: style.position,
+      top: style.top,
+      zIndex: style.zIndex,
+      display: style.display,
+      visibility: style.visibility
+    });
+    
+    // If it's at the top of the page, it's the persistent banner
+    if (rect.top <= 10 && rect.bottom > 0) {
+      bannerHeight = rect.bottom;
+      bannerZIndex = Math.max(bannerZIndex, elementZIndex);
+      foundBanner = true;
+      console.log(`🔍 Found TheLadders banner: .desktop-container, height: ${rect.bottom}px, z-index: ${elementZIndex}`);
+    } else {
+      console.log('🔍 TheLadders banner not at top of page:', { top: rect.top, bottom: rect.bottom });
+    }
+  } else {
+    console.log('🔍 No TheLadders banner (.desktop-container) found');
+  }
+
+  // Check for other fixed/sticky positioned banners if TheLadders banner not found
+  if (!foundBanner) {
+    for (const selector of commonBannerSelectors) {
+      const elements = document.querySelectorAll(selector);
+      for (const element of elements) {
+        const style = window.getComputedStyle(element);
+        const position = style.position;
+        const display = style.display;
+        
+        // Skip if not visible
+        if (display === 'none' || style.visibility === 'hidden') continue;
+        
+        // Check if it's a fixed or sticky positioned element
+        if (position === 'fixed' || position === 'sticky') {
+          const rect = element.getBoundingClientRect();
+          const elementZIndex = parseInt(style.zIndex) || 0;
+          
+          // If it's at the top of the page (top <= 10px), it's likely a persistent banner
+          if (rect.top <= 10 && rect.bottom > 0) {
+            bannerHeight = Math.max(bannerHeight, rect.bottom);
+            bannerZIndex = Math.max(bannerZIndex, elementZIndex);
+            foundBanner = true;
+            console.log(`🔍 Found persistent banner: ${selector}, height: ${rect.bottom}px, z-index: ${elementZIndex}`);
+          }
+        }
+      }
+    }
+  }
+
+  // Check for floating accessibility buttons or other floating elements
+  const floatingElements = document.querySelectorAll('[id*="accessibility"], [class*="accessibility"], [id*="IND"], [class*="IND"], [data-inddrag="true"]');
+  console.log('🔍 Found floating elements:', floatingElements.length);
+  
+  for (const element of floatingElements) {
+    const style = window.getComputedStyle(element);
+    const rect = element.getBoundingClientRect();
+    const position = style.position;
+    
+    console.log('🔍 Floating element:', {
+      id: element.id,
+      className: element.className,
+      position: position,
+      top: style.top,
+      bottom: style.bottom,
+      zIndex: style.zIndex,
+      rect: { top: rect.top, bottom: rect.bottom, height: rect.height }
+    });
+    
+    // If it's a floating element positioned at the top, treat it as a banner
+    if ((position === 'fixed' || position === 'absolute') && rect.top <= 50 && rect.height > 30) {
+      bannerHeight = Math.max(bannerHeight, rect.bottom);
+      bannerZIndex = Math.max(bannerZIndex, parseInt(style.zIndex) || 0);
+      foundBanner = true;
+      console.log(`🔍 Found floating element as banner: ${element.id || element.className}, height: ${rect.bottom}px`);
+    }
+  }
+
+  // Also check for any element that might be acting as a persistent banner
+  // Look for elements that are positioned at the top and have significant height
+  if (!foundBanner) {
+    console.log('🔍 Checking for generic banner elements...');
+    const allElements = document.querySelectorAll('*');
+    for (const element of allElements) {
+      const style = window.getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      
+      // Skip if not visible, too small, or if it's the html/body element
+      if (style.display === 'none' || 
+          style.visibility === 'hidden' || 
+          rect.height < 50 || 
+          element.tagName === 'HTML' || 
+          element.tagName === 'BODY' ||
+          element === document.documentElement ||
+          element === document.body) continue;
+      
+      // If element is at the very top and has substantial height, it might be a banner
+      if (rect.top <= 5 && rect.bottom > 80 && rect.bottom < 200) { // Added max height check
+        bannerHeight = Math.max(bannerHeight, rect.bottom);
+        bannerZIndex = Math.max(bannerZIndex, parseInt(style.zIndex) || 0);
+        foundBanner = true;
+        console.log(`🔍 Found potential banner: ${element.tagName}.${element.className}, height: ${rect.bottom}px`);
+        break; // Found a likely banner, stop searching
+      }
+    }
+  }
+
+  // Check specifically for the accessibility button
+  const accessibilityBtn = document.getElementById('INDmenu-btn');
+  let accessibilityConflict = false;
+  let accessibilityBottom = 0;
+  
+  if (accessibilityBtn) {
+    const rect = accessibilityBtn.getBoundingClientRect();
+    const style = window.getComputedStyle(accessibilityBtn);
+    accessibilityBottom = rect.bottom;
+    accessibilityConflict = true;
+    console.log('🔍 Found accessibility button:', {
+      id: accessibilityBtn.id,
+      rect: { top: rect.top, bottom: rect.bottom, height: rect.height },
+      style: { position: style.position, bottom: style.bottom, zIndex: style.zIndex }
+    });
+  }
+
+  // Calculate button position
+  let topPosition = '20px';
+  let zIndex = '10000';
+
+  if (foundBanner) {
+    // Position button below the banner with some padding
+    topPosition = `${bannerHeight + 15}px`;
+    // Ensure button appears above the banner
+    zIndex = `${Math.max(10000, bannerZIndex + 100)}`;
+    console.log(`📍 Positioning button at top: ${topPosition}, z-index: ${zIndex}`);
+  } else if (accessibilityConflict) {
+    // If accessibility button is at the top, position our button below it
+    if (accessibilityBottom > 0 && accessibilityBottom < 200) {
+      topPosition = `${accessibilityBottom + 15}px`;
+      zIndex = '10000';
+      console.log(`📍 Positioning button below accessibility button at top: ${topPosition}`);
+    } else {
+      console.log('📍 Accessibility button found but not at top, using default position');
+    }
+  } else {
+    console.log('📍 No persistent banner or accessibility conflict detected, using default position');
+  }
+
+  return { top: topPosition, zIndex };
+}
+
 // Inject floating button into the page
 function injectFloatingButton() {
   // Check if floating button already exists
@@ -921,6 +1131,11 @@ function injectFloatingButton() {
   }
 
   console.log('Injecting floating button...');
+
+  // Detect persistent banner and get optimal position
+  console.log('🔍 Starting banner detection...');
+  const { top: buttonTop, zIndex: buttonZIndex } = detectPersistentBannerAndGetPosition();
+  console.log('🔍 Banner detection result:', { top: buttonTop, zIndex: buttonZIndex });
 
   // Create floating button container
   const fabContainer = document.createElement('div');
@@ -939,7 +1154,7 @@ function injectFloatingButton() {
   fabContainer.innerHTML = `
     <div id="jot-snatcher-fab-button" style="
       position: fixed;
-      top: 20px;
+      top: ${buttonTop};
       right: 20px;
       width: 60px;
       height: 60px;
@@ -952,7 +1167,7 @@ function injectFloatingButton() {
       justify-content: center;
       box-shadow: 0 4px 20px rgba(186, 116, 95, 0.3);
       transition: all 0.3s ease;
-      z-index: 10000;
+      z-index: ${buttonZIndex};
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     ">
       <img src="${iconUrl}" alt="Job Collector" style="
@@ -1039,6 +1254,14 @@ function injectFloatingButton() {
         openIframePanel();
     });
     
+    // Re-position button after a short delay to handle late-loading banners
+    setTimeout(() => {
+      const { top: newTop, zIndex: newZIndex } = detectPersistentBannerAndGetPosition();
+      fabButton.style.top = newTop;
+      fabButton.style.zIndex = newZIndex;
+      console.log(`🔄 Re-positioned floating button: top: ${newTop}, z-index: ${newZIndex}`);
+    }, 1000);
+    
     console.log('Click handler added successfully');
   } else {
     console.error('Floating button element not found after creation');
@@ -1080,6 +1303,15 @@ function initializeFloatingButton() {
     injectFloatingButtonCSS();
     checkAuthAndInjectButton().catch(console.error);
   }
+  
+  // Set up periodic webapp status check (every 60 seconds)
+  setInterval(async () => {
+    try {
+      await checkWebappLogin();
+    } catch (error) {
+      console.error('❌ Error in periodic webapp status check:', error);
+    }
+  }, 60000); // Check every 60 seconds
 }
 
 
@@ -1090,6 +1322,104 @@ async function checkSupabaseConnection(): Promise<boolean> {
     return response && response.success && response.data && response.data.isAuthenticated;
   } catch (error) {
     console.error('❌ Error checking Supabase connection:', error);
+    return false;
+  }
+}
+
+// Check webapp connection status using API response
+async function checkWebappConnection(): Promise<boolean> {
+  try {
+    const response = await chrome.runtime.sendMessage({ type: 'CHECK_CONNECTION' });
+    if (response && response.success && response.data) {
+      // Use the verified API response to determine webapp connection
+      // The 'connected' field indicates if the API call was successful
+      return response.data.connected === true;
+    }
+    return false;
+  } catch (error) {
+    console.error('❌ Error checking webapp connection:', error);
+    return false;
+  }
+}
+
+// Check if user is logged into the webapp (works across all domains)
+async function checkWebappLogin(): Promise<boolean> {
+  try {
+    const currentDomain = window.location.hostname;
+    console.log('🔍 Checking webapp login on domain:', currentDomain);
+    
+    // Check if we're on the webapp domain - if so, check localStorage directly
+    const isOnWebappDomain = currentDomain.includes('sp-jot-platform.vercel.app') || 
+                            currentDomain.includes('sp-jot') ||
+                            currentDomain.includes('jot-platform');
+    
+    if (isOnWebappDomain) {
+      // On webapp domain - check localStorage directly
+      const authKeys = Object.keys(localStorage).filter(key =>
+        key.includes('supabase') ||
+        key.includes('sb-') ||
+        key.includes('auth')
+      );
+      
+      console.log('🔍 Found auth keys on webapp domain:', authKeys);
+      
+      for (const key of authKeys) {
+        try {
+          const value = localStorage.getItem(key);
+          if (value) {
+            const parsed = JSON.parse(value);
+            // Check for valid authentication data
+            if (parsed && (
+              parsed.access_token || 
+              parsed.session || 
+              parsed.user ||
+              (parsed.expires_at && parsed.expires_at > Date.now() / 1000)
+            )) {
+              console.log('✅ Webapp login detected on webapp domain via key:', key);
+              // Store this status in Chrome storage for other domains
+              await chrome.storage.local.set({ 
+                webappConnected: true, 
+                webappLastChecked: Date.now() 
+              });
+              return true;
+            }
+          }
+        } catch (e) {
+          // Continue checking other keys
+        }
+      }
+      
+      // No valid auth found on webapp domain
+      console.log('❌ No webapp login detected on webapp domain');
+      await chrome.storage.local.set({ 
+        webappConnected: false, 
+        webappLastChecked: Date.now() 
+      });
+      return false;
+    } else {
+      // On other domains (job sites) - check stored status from Chrome storage
+      console.log('🔍 On job site, checking stored webapp status...');
+      
+      const result = await chrome.storage.local.get(['webappConnected', 'webappLastChecked']);
+      const webappConnected = result.webappConnected || false;
+      const lastChecked = result.webappLastChecked || 0;
+      const timeSinceLastCheck = Date.now() - lastChecked;
+      
+      // If status is older than 5 minutes, consider it stale
+      if (timeSinceLastCheck > 5 * 60 * 1000) {
+        console.log('⚠️ Webapp status is stale, assuming not connected');
+        await chrome.storage.local.set({ 
+          webappConnected: false, 
+          webappLastChecked: Date.now() 
+        });
+        return false;
+      }
+      
+      console.log('📊 Stored webapp status:', webappConnected, 'last checked:', new Date(lastChecked).toLocaleTimeString());
+      return webappConnected;
+    }
+  } catch (error) {
+    console.error('❌ Error checking webapp login:', error);
     return false;
   }
 }
@@ -1153,6 +1483,7 @@ interface SupabaseAuthData {
     isActive: boolean;
   };
 }
+
 
 // Cache for auth data to reduce excessive calls
 let cachedAuthData: SupabaseAuthData | null = null;
@@ -1298,19 +1629,22 @@ function injectLoginPrompt() {
 
   console.log('Injecting login prompt...');
 
+  // Detect persistent banner and get optimal position for login prompt
+  const { top: promptTop, zIndex: promptZIndex } = detectPersistentBannerAndGetPosition();
+
   // Create login prompt container
   const loginContainer = document.createElement('div');
   loginContainer.id = 'jot-snatcher-login-prompt';
   loginContainer.style.cssText = `
     position: fixed;
-    top: 20px;
+    top: ${promptTop};
     right: 20px;
     width: 300px;
     background: rgba(186, 116, 95, 0.95);
     border: 2px solid rgba(216, 178, 167, 0.8);
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    z-index: 10000;
+    z-index: ${promptZIndex};
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     padding: 20px;
     color: white;
@@ -1369,7 +1703,7 @@ function injectLoginPrompt() {
         injectFloatingButton();
       }
     });
-  }, 5000); // Check every 5 seconds
+  }, 60000); // Check every 60 seconds
 }
 
 // Listen for messages from background script
@@ -1388,30 +1722,46 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       sendResponse({ success: true });
       break;
     
-    case 'EXTRACT_JOB_DATA':
-      try {
-        console.log('🔍 Starting enhanced job extraction...');
-        const jobData = extractionManager.extractCurrentJob();
-        
-        if (jobData) {
-          console.log('✅ Job data extracted successfully:', jobData);
-          sendResponse({ success: true, data: jobData });
-        } else {
-          console.log('⚠️ No job data found with enhanced extraction, trying fallback...');
-          const fallbackData = FallbackExtractor.extractWithCommonPatterns();
-          if (fallbackData) {
-            console.log('✅ Fallback extraction successful:', fallbackData);
-            sendResponse({ success: true, data: fallbackData });
-          } else {
-            console.log('❌ No job data found on current page');
-            sendResponse({ success: false, error: 'No job data found' });
-          }
+    case 'CHECK_WEBAPP_LOGIN':
+      (async () => {
+        try {
+          console.log('🔍 Content script: Checking webapp login status...');
+          const isLoggedIn = await checkWebappLogin();
+          console.log('📊 Content script: Webapp login status:', isLoggedIn);
+          sendResponse({ success: true, isLoggedIn });
+        } catch (error) {
+          console.error('❌ Content script: Error checking webapp login:', error);
+          sendResponse({ success: false, error: error instanceof Error ? error.message : 'Unknown error' });
         }
-      } catch (error) {
-        console.error('❌ Error extracting job data:', error);
-        sendResponse({ success: false, error: error instanceof Error ? error.message : 'Unknown error' });
-      }
-      break;
+      })();
+      return true; // Keep message channel open for async response
+    
+    case 'EXTRACT_JOB_DATA':
+      (async () => {
+        try {
+          console.log('🔍 Starting enhanced job extraction...');
+          const jobData = await extractionManager.extractCurrentJob();
+          
+          if (jobData) {
+            console.log('✅ Job data extracted successfully:', jobData);
+            sendResponse({ success: true, data: jobData });
+          } else {
+            console.log('⚠️ No job data found with enhanced extraction, trying fallback...');
+            const fallbackData = FallbackExtractor.extractWithCommonPatterns();
+            if (fallbackData) {
+              console.log('✅ Fallback extraction successful:', fallbackData);
+              sendResponse({ success: true, data: fallbackData });
+            } else {
+              console.log('❌ No job data found on current page');
+              sendResponse({ success: false, error: 'No job data found' });
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error extracting job data:', error);
+          sendResponse({ success: false, error: error instanceof Error ? error.message : 'Unknown error' });
+        }
+      })();
+      return true; // Keep message channel open for async response
     
     case 'CHECK_SITE_SUPPORT':
       const isSupported = extractionManager.isSiteSupported();
@@ -1425,6 +1775,24 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     
     case 'CLOSE_IFRAME':
       closeIframePanel();
+      sendResponse({ success: true });
+      break;
+    
+    case 'JOB_ADDED_VIA_EXTENSION':
+      console.log('📤 Content script: Received job added notification:', message);
+      
+      // Send refresh notification to webapp
+      try {
+        window.postMessage({
+          type: 'JOB_ADDED_VIA_EXTENSION',
+          source: 'chrome-extension',
+          jobId: message.jobId
+        }, '*');
+        console.log('📤 Content script: Sent refresh notification to webapp');
+      } catch (error) {
+        console.error('❌ Content script: Error sending refresh notification to webapp:', error);
+      }
+      
       sendResponse({ success: true });
       break;
     
@@ -1451,12 +1819,14 @@ window.addEventListener('message', async (event) => {
         updateIframeHeaderUserName(event.data.authState.userName, event.data.authState.userEmail);
         updateIframeSignOutButton(true);
         
-        // Send webapp connection status update to iframe
+        // Check webapp connection status and send update to iframe
         const iframe = document.getElementById('jot-snatcher-iframe') as HTMLIFrameElement;
         if (iframe && iframe.contentWindow) {
+          // Only show webapp as connected if user is also authenticated with extension
+          const isWebappLoggedIn = checkWebappLogin();
           iframe.contentWindow.postMessage({
             type: 'WEBAPP_CONNECTION_UPDATE',
-            isWebappConnected: false
+            isWebappConnected: isWebappLoggedIn
           }, '*');
         }
       }
@@ -1467,7 +1837,7 @@ window.addEventListener('message', async (event) => {
       updateIframeHeaderUserName(null, null);
       updateIframeSignOutButton(false);
       
-      // Send webapp connection status update to iframe - force false when extension user is not authenticated
+      // When extension user is not authenticated, don't show webapp as connected
       const iframe = document.getElementById('jot-snatcher-iframe') as HTMLIFrameElement;
       if (iframe && iframe.contentWindow) {
         iframe.contentWindow.postMessage({
@@ -1533,8 +1903,8 @@ const monitorSupabaseAuth = async () => {
   }
 };
 
-// Monitor Supabase auth changes every 10 seconds (throttled internally to 5 seconds)
-setInterval(monitorSupabaseAuth, 10000);
+// Monitor Supabase auth changes every 60 seconds (throttled internally to 5 seconds)
+setInterval(monitorSupabaseAuth, 60000);
 
 // Re-inject on navigation (for SPAs)
 let lastUrl = location.href;

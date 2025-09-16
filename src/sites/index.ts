@@ -5,3 +5,5 @@ export { ZipRecruiterExtractor } from './ziprecruiter';
 export { GreenhouseExtractor } from './greenhouse';
 export { HiringCafeExtractor } from './hiring-cafe';
 export { IndeedExtractor } from './indeed';
+export { WorkdayExtractor } from './workday';
+export { TheLaddersExtractor } from './theladders';

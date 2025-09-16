@@ -18,6 +18,7 @@ export interface JobSelectors {
   salary?: string | string[];
   description: string | string[];
   applyLink?: string | string[];
+  jobLink?: string | string[];
   postedDate?: string | string[];
   jobType?: string | string[];
   remote?: string | string[];
@@ -31,6 +32,11 @@ export interface JobSelectors {
   requirements?: string | string[];
   experience?: string | string[];
   education?: string | string[];
+  
+  // Enhanced Monster.com selectors
+  companyUrl?: string | string[];
+  tags?: string | string[];
+  jobId?: string | string[];
 }
 
 // Site-specific configurations
@@ -101,6 +107,10 @@ export const SITE_CONFIGS: Record<string, SiteConfig> = {
       jobType: [
         '[data-testid="attribute_snippet_testid"]', // Both pages
         '.jobsearch-JobMetadataHeader-item' // Detail page
+      ],
+      remote: [
+        '[data-testid="job-location"]', // Location might indicate remote
+        '.jobsearch-JobInfoHeader-subtitle' // Detail page location
       ],
     }
   },
@@ -187,16 +197,285 @@ export const SITE_CONFIGS: Record<string, SiteConfig> = {
     domain: 'monster.com',
     enabled: true,
     selectors: {
-      jobContainer: '[data-testid="job-card"]',
+      jobContainer: '[data-testid="job-card"], .JobView, .job-view-container',
       jobList: '[data-testid="job-results"]',
-      title: '[data-testid="job-title"]',
-      company: '[data-testid="company-name"]',
-      location: '[data-testid="job-location"]',
-      salary: '[data-testid="job-salary"]',
-      description: '[data-testid="job-description"]',
-      applyLink: '[data-testid="job-title"] a',
-      postedDate: '[data-testid="job-posted"]',
-      jobType: '[data-testid="job-type"]',
+      title: '[data-testid="jobTitle"], .JobViewTitle h1, [data-test-id="svx-jobdetails-job-title"]',
+      company: '[data-testid="company"], .JobViewTitle .company, [data-test-id="svx-jobdetails-company"]',
+      location: '[data-testid="jobDetailLocation"], .JobViewTitle .location, [data-test-id="svx-jobdetails-location"]',
+      salary: '[data-testid="job-salary"], .salary-info, [data-test-id="svx-jobdetails-salary"]',
+      description: '[data-testid="job-description"], .description-styles__DescriptionContainerInner-sc-6e39f119-2, .job-description',
+      applyLink: '[data-testid="apply-button"], [data-testid="job-title"] a, .apply-button',
+      postedDate: '[data-testid="jobDetailDateRecency"], [data-testid="job-posted"], .job-posted-date',
+      jobType: '[data-testid="job-type"], .employment-type, [data-test-id*="employment-type"]',
+      companyUrl: 'a[href*="/jobs/search?cn="], .company-link',
+      tags: '[data-testid="jobCardTags"] li, .job-tags li, .skill-tags li'
+    }
+  },
+
+  'hiring-cafe': {
+    name: 'Hiring.Cafe',
+    domain: 'hiring.cafe',
+    enabled: true,
+    selectors: {
+      jobContainer: [
+        '.job-details',
+        '.job-container', 
+        '.content',
+        'main',
+        'body'
+      ],
+      jobList: '.job-list, .jobs-container',
+      title: [
+        'h1.job-title',
+        '.job-header h1',
+        'h1',
+        '.job-title'
+      ],
+      company: [
+        '.company-name',
+        '.job-company',
+        '[data-company]',
+        '.company'
+      ],
+      location: [
+        '.job-location',
+        '.location',
+        '[data-location]',
+        '.job-loc'
+      ],
+      salary: [
+        '.salary',
+        '.compensation',
+        '[data-salary]',
+        '.salary-info'
+      ],
+      description: [
+        '.job-description',
+        '.description',
+        '.content .text',
+        '.job-content'
+      ],
+      applyLink: [
+        '.apply-button',
+        '.apply-link',
+        'a[href*="apply"]'
+      ],
+      postedDate: [
+        '.job-posted',
+        '.posted-date',
+        '.date-posted'
+      ],
+      jobType: [
+        '.job-type',
+        '.employment-type',
+        '.work-type'
+      ]
+    }
+  },
+
+  'greenhouse': {
+    name: 'Greenhouse',
+    domain: 'greenhouse.io',
+    enabled: true,
+    selectors: {
+      jobContainer: 'body, .job__header, .job__description',
+      jobList: '.job-list, .jobs-container',
+      title: [
+        'h1.section-header.section-header--large.font-primary',
+        '.job__title h1',
+        'h1[class*="section-header"]',
+        '.job__header h1'
+      ],
+      company: [
+        '.logo img[alt*="Logo"]',
+        '.image-container .logo img[alt]',
+        '[class*="logo"] img[alt]',
+        '.job__header .logo img[alt]'
+      ],
+      location: [
+        '.job__location div',
+        '.job__location',
+        '[class*="location"] div',
+        '.job__header [class*="location"]'
+      ],
+      salary: '', // No specific salary selector - will extract from description
+      description: [
+        '.job__description.body',
+        '.job__description',
+        '[class*="description"] .body',
+        '.body'
+      ],
+      applyLink: [
+        '.btn.btn--pill[aria-label="Apply"]',
+        '.apply-button',
+        'button[type="button"]'
+      ],
+      postedDate: [
+        'script[type="application/json"]',
+        'script[type="application/ld+json"]',
+        'script'
+      ],
+      jobType: [
+        '.job__tags',
+        '.job-type',
+        '.employment-type'
+      ]
+    }
+  },
+
+  'workday': {
+    name: 'Workday',
+    domain: 'myworkdayjobs.com',
+    enabled: true,
+    selectors: {
+      jobContainer: [
+        'body',
+        '[data-automation-id="jobPosting"]',
+        '.job-posting',
+        '.job-details',
+        '[data-testid="job-posting"]'
+      ],
+      jobList: '[data-automation-id="jobList"]',
+      title: [
+        'h1[data-automation-id="jobPostingHeadline"]',
+        'h1.job-title',
+        '[data-automation-id="jobPostingHeadline"]',
+        'h1',
+        '.job-title'
+      ],
+      company: [
+        '[data-automation-id="companyName"]',
+        '.company-name',
+        '[data-testid="company-name"]',
+        '.job-company',
+        'h2[data-automation-id="companyName"]'
+      ],
+      location: [
+        '[data-automation-id="jobLocation"]',
+        '.job-location',
+        '[data-testid="job-location"]',
+        '.location',
+        '[data-automation-id="jobLocation"] span'
+      ],
+      salary: [
+        '[data-automation-id="compensationText"]',
+        '.salary',
+        '[data-testid="salary"]',
+        '.compensation',
+        '[data-automation-id="compensationText"] span'
+      ],
+      description: [
+        '[data-automation-id="jobPostingDescription"]',
+        '.job-description',
+        '[data-testid="job-description"]',
+        '.description',
+        '[data-automation-id="jobPostingDescription"] div'
+      ],
+      applyLink: [
+        '[data-automation-id="applyButton"]',
+        '.apply-button',
+        '[data-testid="apply-button"]'
+      ],
+      postedDate: [
+        '[data-automation-id="postedOn"]',
+        '.posted-date',
+        '[data-testid="posted-date"]',
+        '.job-posted',
+        '[data-automation-id="postedOn"] span'
+      ],
+      jobType: [
+        '[data-automation-id="jobType"]',
+        '.job-type',
+        '[data-testid="job-type"]',
+        '.employment-type',
+        '[data-automation-id="jobType"] span'
+      ]
+    }
+  },
+
+  'theladders': {
+    name: 'TheLadders',
+    domain: 'theladders.com',
+    enabled: true,
+    selectors: {
+      jobContainer: [
+        '.job-detail-view-container',
+        '.sticky-job-details-container',
+        'body',
+        '.job-details',
+        '.job-posting',
+        '.job-container',
+        'main'
+      ],
+      jobList: [
+        '.job-list',
+        '.jobs-container',
+        '.search-results'
+      ],
+      title: [
+        '.sticky-job-title',
+        'h1.job-title',
+        '.job-header h1',
+        'h1',
+        '.job-title',
+        '[data-testid="job-title"]'
+      ],
+      company: [
+        '.member-company-name',
+        '.company-name',
+        '.job-company',
+        '.employer-name',
+        '[data-testid="company-name"]'
+      ],
+      location: [
+        '.member-job-view-header-details-light-font',
+        '.job-location',
+        '.location',
+        '.job-loc',
+        '[data-testid="job-location"]'
+      ],
+      salary: [
+        '.salary',
+        '.compensation',
+        '.salary-info',
+        '[data-testid="salary"]'
+      ],
+      description: [
+        '#job-description-box',
+        '.job-description-text',
+        '.job-description',
+        '.description',
+        '.job-content',
+        '.content',
+        '[data-testid="job-description"]'
+      ],
+      applyLink: [
+        '.apply-for-me-button',
+        '.regular-apply-button',
+        '.apply-button',
+        '.apply-link',
+        'a[href*="apply"]',
+        '[data-testid="apply-button"]'
+      ],
+      jobLink: [
+        '.job-card-title[href*="/job/"]',
+        '.member-job-card-container a[href*="/job/"]',
+        '.clickable-member-job-card a[href*="/job/"]'
+      ],
+      postedDate: [
+        '.posted-date',
+        '.job-posted',
+        '.date-posted',
+        '[data-testid="posted-date"]'
+      ],
+      jobType: [
+        '.remote-flag-badge-basic',
+        '.remote-flag-badge-in-person',
+        '.job-type',
+        '.employment-type',
+        '.work-type',
+        '[data-testid="job-type"]'
+      ]
     }
   }
 };
