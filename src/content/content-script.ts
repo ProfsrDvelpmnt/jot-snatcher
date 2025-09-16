@@ -125,7 +125,7 @@ let dragOffset = { x: 0, y: 0 };
 
 // Store original dimensions for fullscreen toggle
 let originalWidth = '500px';
-let originalHeight = '700px';
+let originalHeight = '800px';
 let originalTop = '20px';
 let originalRight = '20px';
 let originalLeft = 'auto';
@@ -350,7 +350,7 @@ function openIframePanel() {
     top: ${iframeTop};
     right: 20px;
     width: 520px;
-    height: 720px;
+    height: 820px;
     max-height: 85vh;
     background: white;
     border: 2px solid #ba745f;
@@ -443,7 +443,7 @@ function openIframePanel() {
     } else {
       // Store current dimensions before entering fullscreen
       originalWidth = iframeContainer.style.width || '500px';
-      originalHeight = iframeContainer.style.height || '700px';
+      originalHeight = iframeContainer.style.height || '800px';
       originalTop = iframeContainer.style.top || '20px';
       originalRight = iframeContainer.style.right || '20px';
       originalLeft = iframeContainer.style.left || 'auto';
@@ -494,7 +494,7 @@ function openIframePanel() {
     const isMinimized = iframeContainer.style.height === '60px';
     if (isMinimized) {
       // Expand
-      iframeContainer.style.height = '700px';
+      iframeContainer.style.height = '800px';
       iframeContainer.style.maxHeight = '85vh';
       minimizeBtn.innerHTML = '⤢';
       minimizeBtn.title = 'Minimize';

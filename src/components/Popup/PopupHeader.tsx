@@ -1,12 +1,19 @@
 import React from 'react';
 import { useTheme } from '@/hooks/useTheme';
 import { THEME_OPTIONS } from '@/utils/constants';
+import { UsageDisplay } from '../Header/UsageDisplay';
 
 interface PopupHeaderProps {
   hideInIframe?: boolean;
+  usageData?: {
+    currentUsage?: number;
+    monthlyLimit?: number;
+    remainingUses?: number;
+    tier?: string;
+  } | null;
 }
 
-export const PopupHeader: React.FC<PopupHeaderProps> = ({ hideInIframe = false }) => {
+export const PopupHeader: React.FC<PopupHeaderProps> = ({ hideInIframe = false, usageData }) => {
   // Check if we're in an iframe context
   const isInIframe = window.parent !== window;
   
@@ -52,6 +59,13 @@ export const PopupHeader: React.FC<PopupHeaderProps> = ({ hideInIframe = false }
             </option>
           ))}
         </select>
+        {/* Usage Display in Header */}
+        <div className="flex items-center justify-center">
+          <UsageDisplay 
+            usageData={usageData || undefined} 
+            isCompact={true}
+          />
+        </div>
       </div>
     </div>
   );

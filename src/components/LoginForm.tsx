@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabaseAuth } from '../services/supabaseAuth';
+import { AdminLoginForm } from './AdminLoginForm';
 
 interface LoginFormProps {
   onLoginSuccess?: () => void;
@@ -11,6 +12,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onResetSig
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,14 +32,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onResetSig
     setLoading(false);
   };
 
-  const handleSignOut = async () => {
-    setLoading(true);
-    const result = await supabaseAuth.signOut();
-    if (result.success) {
-      console.log('✅ Sign out successful');
-    }
-    setLoading(false);
-  };
+  // Show admin login form if requested
+  if (showAdminLogin) {
+    return (
+      <AdminLoginForm 
+        onLoginSuccess={onLoginSuccess}
+        onBackToRegular={() => setShowAdminLogin(false)}
+        onResetSignOutFlag={onResetSignOutFlag}
+      />
+    );
+  }
 
   return (
     <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
@@ -93,11 +97,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onResetSig
       
       <div className="mt-4 text-center">
         <button
-          onClick={handleSignOut}
+          onClick={() => setShowAdminLogin(true)}
           disabled={loading}
-          className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+          className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-200 underline font-medium"
         >
-          Sign Out
+          🔐 Admin Login
         </button>
       </div>
     </div>

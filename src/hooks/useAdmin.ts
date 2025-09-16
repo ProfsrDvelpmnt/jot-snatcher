@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { isAdminEmail } from '@/utils/adminUtils';
+import { isAdminEmail, debugAdminDetection } from '@/utils/adminUtils';
 import { supabaseAuth } from '@/services/supabaseAuth';
 
 export const useAdmin = () => {
@@ -14,11 +14,16 @@ export const useAdmin = () => {
         console.log('🔍 Admin check - Auth state:', authState);
 
         if (authState.isAuthenticated && authState.userEmail) {
+          // Run detailed debug analysis
+          debugAdminDetection(authState.userEmail);
+          
           const adminStatus = isAdminEmail(authState.userEmail);
           console.log('🔍 Admin check - Email:', authState.userEmail, 'Is Admin:', adminStatus);
+          console.log('🔍 Admin check - Full auth state:', authState);
           setIsAdmin(adminStatus);
         } else {
           console.log('🔍 Admin check - Not authenticated or no email');
+          console.log('🔍 Admin check - Auth state details:', authState);
           setIsAdmin(false);
         }
       } catch (error) {
