@@ -42,7 +42,6 @@
       "128": "icons/spjot-128.png"
     }
   },
-  "options_page": "src/options/index.html",
   "icons": {
     "16": "icons/spjot-16.png",
     "48": "icons/spjot-48.png",
@@ -50,7 +49,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["icons/*", "floating-button.js", "src/iframe/index.html", "src/iframe/iframe.js", "jspdf.umd.min.js", "html2canvas.min.js"],
+      "resources": ["icons/*", "floating-button.js", "jspdf.umd.min.js", "html2canvas.min.js", "src/iframe/index.html"],
       "matches": ["<all_urls>"]
     }
   ]

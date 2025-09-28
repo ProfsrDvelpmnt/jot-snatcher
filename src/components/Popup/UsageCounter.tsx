@@ -76,15 +76,15 @@ export const UsageCounter: React.FC<UsageCounterProps> = ({ usageData, onRefresh
   if (monthlyLimit === 0) {
     return (
       <div className="px-4 py-3 mb-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-sm text-light-text-secondary dark:text-dark-text-secondary flex-1 min-w-0">
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
             Loading real usage data from database...
           </div>
           {onRefresh && (
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="text-xs px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+              className="text-xs px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isRefreshing ? '⏳' : '🔄'}
             </button>
@@ -97,12 +97,12 @@ export const UsageCounter: React.FC<UsageCounterProps> = ({ usageData, onRefresh
   return (
     <div className="px-4 py-3 mb-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-lg border border-blue-200 dark:border-gray-600">
       {/* Header with subscription status and refresh */}
-      <div className="flex justify-between items-start mb-3 gap-3">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-light-text dark:text-dark-text whitespace-nowrap">
+      <div className="flex justify-between items-center mb-3">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-light-text dark:text-dark-text">
             Subscription Status
           </h3>
-          <div className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${tierInfo.bgColor} ${tierInfo.color}`}>
+          <div className={`px-2 py-1 rounded-full text-xs font-medium ${tierInfo.bgColor} ${tierInfo.color}`}>
             {isActive ? '🟢 Active' : '🔴 Inactive'}
           </div>
         </div>
@@ -110,7 +110,7 @@ export const UsageCounter: React.FC<UsageCounterProps> = ({ usageData, onRefresh
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="text-xs px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+            className="text-xs px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             title="Refresh usage data"
           >
             {isRefreshing ? '⏳' : '🔄'}

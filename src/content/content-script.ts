@@ -77,7 +77,7 @@ if (typeof window !== 'undefined') {
 
 // Import the main functionality (static imports)
 import { extractionManager } from '@/extractors';
-import { ExtractorDebugger } from '@/utils/extractor-debugger';
+// import { ExtractorDebugger } from '@/utils/extractor-debugger'; // Removed for production
 import { FallbackExtractor } from '@/utils/fallback-extractor';
 // Note: Content scripts can't directly import ES modules, using Chrome messaging instead
 
@@ -86,20 +86,7 @@ console.log('✅ All modules imported successfully');
 // Add debugging tools to window for console access
 if (typeof window !== 'undefined') {
   try {
-    (window as any).JOTDebugger = ExtractorDebugger;
-    (window as any).testExtraction = () => ExtractorDebugger.testAllExtractors();
-    (window as any).debugCurrentSite = async () => {
-      const site = window.location.hostname.toLowerCase();
-      if (site.includes('linkedin')) return await ExtractorDebugger.debugExtraction('linkedin');
-      if (site.includes('monster')) return await ExtractorDebugger.debugExtraction('monster');
-      if (site.includes('ziprecruiter')) return await ExtractorDebugger.debugExtraction('ziprecruiter');
-      if (site.includes('greenhouse')) return await ExtractorDebugger.debugExtraction('greenhouse');
-      if (site.includes('hiring.cafe')) return await ExtractorDebugger.debugExtraction('hiring-cafe');
-      if (site.includes('indeed')) return await ExtractorDebugger.debugExtraction('indeed');
-      console.log('No supported site detected');
-      return null;
-    };
-    (window as any).generateReport = () => ExtractorDebugger.generateTestReport();
+    // Debug tools removed for production
     (window as any).tryFallback = () => FallbackExtractor.extractWithCommonPatterns();
     
     console.log('🔧 Debugging tools available:', {
