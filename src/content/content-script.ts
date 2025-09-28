@@ -229,7 +229,7 @@ async function updateIframeHeader(userName: string | null, userEmail: string | n
   const supabaseColor = isSupabaseConnected ? 'rgba(34, 197, 94, 0.9)' : 'rgba(239, 68, 68, 0.9)';
   
   title.innerHTML = `
-    <img src="${chrome.runtime.getURL('icons/spjot-48.png')}" style="width: 48px; height: 48px; flex-shrink: 0; margin-top: -6px;" alt="JOT">
+    <img src="${chrome.runtime.getURL('icons/spjot-48.png')}" style="width: 48px; height: 48px; flex-shrink: 0; display: block;" alt="JOT" onerror="console.error('Failed to load icon:', this.src)">
     <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 0;">
       <span style="font-size: 28px; font-weight: 900; line-height: 1.1; margin-bottom: 4px;">Snatcher</span>
       <span style="font-size: 16px; opacity: 0.9; line-height: 1.2; font-weight: 400;">Collects Jobs For <span id="jot-snatcher-webapp-status" style="display: none;">${webappStatus}</span><span id="jot-snatcher-supabase-status" style="display: none;">${supabaseStatus}</span><span id="jot-snatcher-username" style="font-weight: 600; color: rgba(255, 255, 255, 0.95);"></span></span>
@@ -356,7 +356,7 @@ function openIframePanel() {
     padding: 20px 24px;
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     min-height: 100px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
@@ -368,11 +368,11 @@ function openIframePanel() {
     align-items: center;
     gap: 16px;
     font-weight: bold;
-    flex: 1;
+    flex-shrink: 0;
     min-width: 0;
   `;
   title.innerHTML = `
-    <img src="${chrome.runtime.getURL('icons/spjot-48.png')}" style="width: 48px; height: 48px; flex-shrink: 0; margin-top: -6px;" alt="JOT">
+    <img src="${chrome.runtime.getURL('icons/spjot-48.png')}" style="width: 48px; height: 48px; flex-shrink: 0; display: block;" alt="JOT" onerror="console.error('Failed to load icon:', this.src)">
     <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 0;">
       <span style="font-size: 28px; font-weight: 900; line-height: 1.1; margin-bottom: 4px;">Snatcher</span>
       <span style="font-size: 16px; opacity: 0.9; line-height: 1.2; font-weight: 400;">Collects Jobs For <span id="jot-snatcher-username" style="font-weight: 600; color: rgba(255, 255, 255, 0.95);"></span></span>
@@ -382,26 +382,25 @@ function openIframePanel() {
   const controls = document.createElement('div');
   controls.style.cssText = `
     display: flex;
-    gap: 12px;
-    align-items: flex-start;
+    align-items: center;
+    gap: 6px;
     flex-shrink: 0;
     margin-left: 20px;
-    padding-top: 6px;
-    margin-top: -8px;
+    max-width: 200px;
   `;
 
   // Fullscreen toggle button
   const fullscreenBtn = document.createElement('button');
   fullscreenBtn.innerHTML = '⛶';
   fullscreenBtn.style.cssText = `
-    width: 30px;
-    height: 30px;
+    width: 18px !important;
+    height: 18px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
     color: white;
-    border-radius: 8px;
+    border-radius: 3px;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 10px;
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -410,6 +409,7 @@ function openIframePanel() {
     flex-shrink: 0;
     border: 1px solid rgba(255, 255, 255, 0.2);
   `;
+  console.log('🔍 DEBUG: Fullscreen button width set to:', fullscreenBtn.style.width);
   fullscreenBtn.onmouseenter = () => {
     fullscreenBtn.style.background = 'rgba(255, 255, 255, 0.3)';
     fullscreenBtn.style.transform = 'scale(1.1)';
@@ -459,14 +459,14 @@ function openIframePanel() {
   const minimizeBtn = document.createElement('button');
   minimizeBtn.innerHTML = '⤢';
   minimizeBtn.style.cssText = `
-    width: 30px;
-    height: 30px;
+    width: 18px !important;
+    height: 18px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
     color: white;
-    border-radius: 8px;
+    border-radius: 3px;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 10px;
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -508,14 +508,14 @@ function openIframePanel() {
   const closeBtn = document.createElement('button');
   closeBtn.innerHTML = '×';
   closeBtn.style.cssText = `
-    width: 30px;
-    height: 30px;
+    width: 18px !important;
+    height: 18px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
     color: white;
-    border-radius: 8px;
+    border-radius: 3px;
     cursor: pointer;
-    font-size: 20px;
+    font-size: 12px;
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -592,12 +592,13 @@ function openIframePanel() {
     background: #ba745f !important;
     color: white !important;
     border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    border-radius: 6px;
-    padding: 4px 8px;
-    font-size: 12px;
+    border-radius: 3px;
+    padding: 1px 3px;
+    font-size: 9px;
     font-weight: bold;
     cursor: pointer;
-    min-width: 80px;
+    min-width: 18px !important;
+    height: 18px;
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -1615,7 +1616,7 @@ async function getSubscriptionInfoFromBackground(userId: string) {
   }
 }
 
-// Inject login prompt instead of floating button
+// Inject draggable login prompt instead of floating button
 function injectLoginPrompt() {
   // Remove existing floating button if it exists
   const existingFab = document.getElementById('jot-snatcher-fab');
@@ -1628,7 +1629,7 @@ function injectLoginPrompt() {
     return;
   }
 
-  console.log('Injecting login prompt...');
+  console.log('Injecting draggable login prompt...');
 
   // Detect persistent banner and get optimal position for login prompt
   const { top: promptTop, zIndex: promptZIndex } = detectPersistentBannerAndGetPosition();
@@ -1636,27 +1637,63 @@ function injectLoginPrompt() {
   // Create login prompt container
   const loginContainer = document.createElement('div');
   loginContainer.id = 'jot-snatcher-login-prompt';
+  
+  // Set initial position (center of screen)
+  const centerX = (window.innerWidth - 320) / 2;
+  const centerY = (window.innerHeight - 400) / 2;
+  
   loginContainer.style.cssText = `
     position: fixed;
-    top: ${promptTop};
-    right: 20px;
-    width: 300px;
+    top: ${Math.max(20, centerY)}px;
+    left: ${Math.max(20, centerX)}px;
+    width: 320px;
     background: rgba(186, 116, 95, 0.95);
     border: 2px solid rgba(216, 178, 167, 0.8);
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     z-index: ${promptZIndex};
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    padding: 20px;
     color: white;
     text-align: center;
+    cursor: move;
+    user-select: none;
+    backdrop-filter: blur(10px);
   `;
 
-  loginContainer.innerHTML = `
+  // Add drag handle
+  const dragHandle = document.createElement('div');
+  dragHandle.style.cssText = `
+    background: rgba(186, 116, 95, 1);
+    padding: 12px 16px;
+    border-radius: 12px 12px 0 0;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(216, 178, 167, 0.3);
+  `;
+  
+  dragHandle.innerHTML = `
+    <div style="display: flex; align-items: center;">
+      <img src="${chrome.runtime.getURL('icons/spjot-48.png')}" style="width: 24px; height: 24px; margin-right: 8px;" alt="JOT">
+      <span style="font-weight: bold; font-size: 16px;">JOT Snatcher</span>
+    </div>
+    <div style="display: flex; gap: 4px;">
+      <div style="width: 8px; height: 8px; background: rgba(255,255,255,0.6); border-radius: 50%;"></div>
+      <div style="width: 8px; height: 8px; background: rgba(255,255,255,0.6); border-radius: 50%;"></div>
+      <div style="width: 8px; height: 8px; background: rgba(255,255,255,0.6); border-radius: 50%;"></div>
+    </div>
+  `;
+
+  // Add content area
+  const contentArea = document.createElement('div');
+  contentArea.style.cssText = `
+    padding: 20px;
+  `;
+  
+  contentArea.innerHTML = `
     <div style="margin-bottom: 16px;">
-      <img src="${chrome.runtime.getURL('icons/spjot-48.png')}" style="width: 48px; height: 48px; margin-bottom: 8px;" alt="JOT">
-      <h3 style="margin: 0; font-size: 18px; font-weight: bold;">JOT Snatcher</h3>
-      <p style="margin: 8px 0 0 0; font-size: 14px; opacity: 0.9;">Please log in to use the extension</p>
+      <p style="margin: 0 0 16px 0; font-size: 14px; opacity: 0.9;">Please log in to use the extension</p>
     </div>
     <div style="margin-bottom: 16px;">
       <button id="open-extension-btn" style="
@@ -1664,12 +1701,13 @@ function injectLoginPrompt() {
         background: rgba(255, 255, 255, 0.2);
         color: white;
         border: none;
-        padding: 10px 20px;
-        border-radius: 6px;
+        padding: 12px 24px;
+        border-radius: 8px;
         font-weight: bold;
         cursor: pointer;
         transition: all 0.2s ease;
         font-size: 14px;
+        width: 100%;
       " onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'">
         Open Extension
       </button>
@@ -1679,8 +1717,47 @@ function injectLoginPrompt() {
     </div>
   `;
 
+  loginContainer.appendChild(dragHandle);
+  loginContainer.appendChild(contentArea);
+
+  // Add drag functionality
+  let isDragging = false;
+  let dragOffset = { x: 0, y: 0 };
+
+  dragHandle.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    const rect = loginContainer.getBoundingClientRect();
+    dragOffset.x = e.clientX - rect.left;
+    dragOffset.y = e.clientY - rect.top;
+    dragHandle.style.cursor = 'grabbing';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+      const newX = e.clientX - dragOffset.x;
+      const newY = e.clientY - dragOffset.y;
+      
+      // Keep within viewport bounds
+      const maxX = window.innerWidth - 320;
+      const maxY = window.innerHeight - 400;
+      
+      loginContainer.style.left = Math.max(0, Math.min(newX, maxX)) + 'px';
+      loginContainer.style.top = Math.max(0, Math.min(newY, maxY)) + 'px';
+    }
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (isDragging) {
+      isDragging = false;
+      dragHandle.style.cursor = 'grab';
+      document.body.style.userSelect = '';
+    }
+  });
+
   document.body.appendChild(loginContainer);
-  console.log('Login prompt injected');
+  console.log('Draggable login prompt injected');
 
   // Add click handler for the button
   const openExtensionBtn = document.getElementById('open-extension-btn');

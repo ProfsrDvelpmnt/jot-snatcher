@@ -9,6 +9,7 @@ import { StatusPanel } from './StatusPanel';
 import { AdminPanel } from './AdminPanel';
 import { SignOutPanel } from './SignOutPanel';
 import { LoginForm } from '../LoginForm';
+import { DraggableLoginForm } from '../DraggableLoginForm';
 import { useJobData } from '@/hooks/useJobData';
 import { isAdminEmail } from '@/utils/adminUtils';
 // import { TABS } from '@/utils/constants';
@@ -94,7 +95,7 @@ export const Popup: React.FC = () => {
       
       {/* Show login form if not authenticated */}
       {requiresLogin ? (
-        <LoginForm />
+        <DraggableLoginForm />
       ) : (
         <>
           <TabContainer

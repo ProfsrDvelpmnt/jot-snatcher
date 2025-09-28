@@ -11,6 +11,7 @@ import { StatusPanel } from '../Popup/StatusPanel';
 import { AdminPanel } from '../Popup/AdminPanel';
 import { SignOutPanel } from '../Popup/SignOutPanel';
 import { LoginForm } from '../LoginForm';
+import { DraggableLoginForm } from '../DraggableLoginForm';
 import { useJobData } from '@/hooks/useJobData';
 import { isAdminEmail } from '@/utils/adminUtils';
 // import { useAdmin } from '@/hooks/useAdmin'; // TEMPORARY: Disabled for troubleshooting
@@ -266,7 +267,7 @@ export const IframeContent: React.FC = () => {
       
       {/* Show login form if not authenticated */}
       {authState.requiresLogin ? (
-        <LoginForm onResetSignOutFlag={() => setHasExplicitlySignedOut(false)} />
+        <DraggableLoginForm onResetSignOutFlag={() => setHasExplicitlySignedOut(false)} />
       ) : (
         <>
             <TabContainer
