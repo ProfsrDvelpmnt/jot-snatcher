@@ -406,14 +406,14 @@ function openIframePanel() {
   const fullscreenBtn = document.createElement('button');
   fullscreenBtn.innerHTML = '⛶';
   fullscreenBtn.style.cssText = `
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
     color: white;
-    border-radius: 4px;
+    border-radius: 3px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -471,14 +471,14 @@ function openIframePanel() {
   const minimizeBtn = document.createElement('button');
   minimizeBtn.innerHTML = '⤢';
   minimizeBtn.style.cssText = `
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
     color: white;
-    border-radius: 4px;
+    border-radius: 3px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -520,14 +520,14 @@ function openIframePanel() {
   const closeBtn = document.createElement('button');
   closeBtn.innerHTML = '×';
   closeBtn.style.cssText = `
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
     color: white;
-    border-radius: 4px;
+    border-radius: 3px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -604,13 +604,13 @@ function openIframePanel() {
     background: #ba745f !important;
     color: white !important;
     border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    border-radius: 4px;
-    padding: 2px 4px;
-    font-size: 10px;
+    border-radius: 3px;
+    padding: 1px 3px;
+    font-size: 9px;
     font-weight: bold;
     cursor: pointer;
-    min-width: 60px;
-    height: 20px;
+    min-width: 50px;
+    height: 18px;
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
