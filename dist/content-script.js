@@ -99,20 +99,20 @@ ${o.additionalNotes.join(`
     </div>
   `;const r=document.createElement("div");r.style.cssText=`
     display: flex;
-    gap: 12px;
+    gap: 8px;
     align-items: center;
     flex-shrink: 0;
     margin-left: 20px;
-    max-width: 200px;
+    max-width: 250px;
   `;const i=document.createElement("button");i.innerHTML="⛶",i.style.cssText=`
-    width: 30px;
-    height: 30px;
+    width: 26px;
+    height: 26px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
     color: white;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -121,14 +121,14 @@ ${o.additionalNotes.join(`
     flex-shrink: 0;
     border: 1px solid rgba(255, 255, 255, 0.2);
   `,i.onmouseenter=()=>{i.style.background="rgba(255, 255, 255, 0.3)",i.style.transform="scale(1.1)"},i.onmouseleave=()=>{i.style.background="rgba(255, 255, 255, 0.2)",i.style.transform="scale(1)"},i.onclick=()=>{o.style.width==="100vw"?(o.style.width=G,o.style.height=ie,o.style.top=se,o.style.right=le,o.style.left=ce,o.style.bottom=de,o.style.borderRadius=ue,i.innerHTML="⛶",i.title="Fullscreen"):(G=o.style.width||"500px",ie=o.style.height||"800px",se=o.style.top||"20px",le=o.style.right||"20px",ce=o.style.left||"auto",de=o.style.bottom||"auto",ue=o.style.borderRadius||"12px",o.style.width="100vw",o.style.height="100vh",o.style.top="0",o.style.right="0",o.style.left="0",o.style.bottom="0",o.style.borderRadius="0",i.innerHTML="⛷",i.title="Exit Fullscreen")},i.title="Fullscreen";const l=document.createElement("button");l.innerHTML="⤢",l.style.cssText=`
-    width: 30px;
-    height: 30px;
+    width: 26px;
+    height: 26px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
     color: white;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -137,14 +137,14 @@ ${o.additionalNotes.join(`
     flex-shrink: 0;
     border: 1px solid rgba(255, 255, 255, 0.2);
   `,l.onmouseenter=()=>{l.style.background="rgba(255, 255, 255, 0.3)",l.style.transform="scale(1.1)"},l.onmouseleave=()=>{l.style.background="rgba(255, 255, 255, 0.2)",l.style.transform="scale(1)"},l.onclick=()=>{if(o.style.height==="60px"){const h=window.innerHeight+"px";o.style.height=h,o.style.maxHeight=h,o.style.top="0px",l.innerHTML="⤡",l.title="Minimize"}else o.style.height="60px",o.style.maxHeight="60px",l.innerHTML="⤢",l.title="Expand"},l.title="Minimize";const s=document.createElement("button");s.innerHTML="×",s.style.cssText=`
-    width: 30px;
-    height: 30px;
+    width: 26px;
+    height: 26px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
     color: white;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 20px;
+    font-size: 18px;
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -172,11 +172,12 @@ ${o.additionalNotes.join(`
     color: white !important;
     border: 1px solid rgba(255, 255, 255, 0.3) !important;
     border-radius: 6px;
-    padding: 4px 8px;
-    font-size: 12px;
+    padding: 3px 6px;
+    font-size: 11px;
     font-weight: bold;
     cursor: pointer;
-    min-width: 80px;
+    min-width: 70px;
+    height: 26px;
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;

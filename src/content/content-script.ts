@@ -395,25 +395,25 @@ function openIframePanel() {
   const controls = document.createElement('div');
   controls.style.cssText = `
     display: flex;
-    gap: 12px;
+    gap: 8px;
     align-items: center;
     flex-shrink: 0;
     margin-left: 20px;
-    max-width: 200px;
+    max-width: 250px;
   `;
 
   // Fullscreen toggle button
   const fullscreenBtn = document.createElement('button');
   fullscreenBtn.innerHTML = '⛶';
   fullscreenBtn.style.cssText = `
-    width: 30px;
-    height: 30px;
+    width: 26px;
+    height: 26px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
     color: white;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -471,14 +471,14 @@ function openIframePanel() {
   const minimizeBtn = document.createElement('button');
   minimizeBtn.innerHTML = '⤢';
   minimizeBtn.style.cssText = `
-    width: 30px;
-    height: 30px;
+    width: 26px;
+    height: 26px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
     color: white;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -520,14 +520,14 @@ function openIframePanel() {
   const closeBtn = document.createElement('button');
   closeBtn.innerHTML = '×';
   closeBtn.style.cssText = `
-    width: 30px;
-    height: 30px;
+    width: 26px;
+    height: 26px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
     color: white;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 20px;
+    font-size: 18px;
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -605,11 +605,12 @@ function openIframePanel() {
     color: white !important;
     border: 1px solid rgba(255, 255, 255, 0.3) !important;
     border-radius: 6px;
-    padding: 4px 8px;
-    font-size: 12px;
+    padding: 3px 6px;
+    font-size: 11px;
     font-weight: bold;
     cursor: pointer;
-    min-width: 80px;
+    min-width: 70px;
+    height: 26px;
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
