@@ -395,19 +395,18 @@ function openIframePanel() {
   const controls = document.createElement('div');
   controls.style.cssText = `
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     flex-shrink: 0;
     margin-left: 20px;
-    max-width: 60px;
+    max-width: 200px;
   `;
 
   // Fullscreen toggle button
   const fullscreenBtn = document.createElement('button');
   fullscreenBtn.innerHTML = '⛶';
   fullscreenBtn.style.cssText = `
-    width: 16px;
+    width: 18px !important;
     height: 18px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
@@ -423,6 +422,7 @@ function openIframePanel() {
     flex-shrink: 0;
     border: 1px solid rgba(255, 255, 255, 0.2);
   `;
+  console.log('🔍 DEBUG: Fullscreen button width set to:', fullscreenBtn.style.width);
   fullscreenBtn.onmouseenter = () => {
     fullscreenBtn.style.background = 'rgba(255, 255, 255, 0.3)';
     fullscreenBtn.style.transform = 'scale(1.1)';
@@ -472,7 +472,7 @@ function openIframePanel() {
   const minimizeBtn = document.createElement('button');
   minimizeBtn.innerHTML = '⤢';
   minimizeBtn.style.cssText = `
-    width: 16px;
+    width: 18px !important;
     height: 18px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
@@ -521,7 +521,7 @@ function openIframePanel() {
   const closeBtn = document.createElement('button');
   closeBtn.innerHTML = '×';
   closeBtn.style.cssText = `
-    width: 16px;
+    width: 18px !important;
     height: 18px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
@@ -610,7 +610,7 @@ function openIframePanel() {
     font-size: 9px;
     font-weight: bold;
     cursor: pointer;
-    min-width: 16px;
+    min-width: 18px !important;
     height: 18px;
     appearance: none;
     -webkit-appearance: none;

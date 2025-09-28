@@ -129,40 +129,31 @@ export const DraggableLoginForm: React.FC<DraggableLoginFormProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm"
-      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+      className="w-full h-full bg-white dark:bg-gray-800 flex flex-col"
     >
-      <div 
-        ref={dragRef}
-        className="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 w-96 max-w-[90vw]"
-        style={{
-          transform: `translate(${position.x}px, ${position.y}px)`,
-          transition: isDragging ? 'none' : 'transform 0.2s ease-out'
-        }}
-        onMouseDown={handleMouseDown}
-      >
-        {/* Drag Handle */}
-        <div className="drag-handle bg-terracotta text-white p-4 rounded-t-lg cursor-grab active:cursor-grabbing select-none">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <img 
-                src={chrome.runtime.getURL('icons/spjot-48.png')} 
-                alt="JOT Snatcher" 
-                className="w-6 h-6 mr-2"
-              />
-              <h2 className="text-lg font-bold">
-                Sign In to JOT Snatcher
-              </h2>
-            </div>
-            <div className="flex items-center space-x-1">
-              <div className="w-2 h-2 bg-white/60 rounded-full"></div>
-              <div className="w-2 h-2 bg-white/60 rounded-full"></div>
-              <div className="w-2 h-2 bg-white/60 rounded-full"></div>
-            </div>
+      {/* Fixed Header */}
+      <div className="bg-terracotta text-white p-4 rounded-t-lg flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <img 
+              src={chrome.runtime.getURL('icons/spjot-48.png')} 
+              alt="JOT Snatcher" 
+              className="w-6 h-6 mr-2"
+            />
+            <h2 className="text-lg font-bold">
+              Sign In to JOT Snatcher
+            </h2>
+          </div>
+          <div className="flex items-center space-x-1">
+            <div className="w-2 h-2 bg-white/60 rounded-full"></div>
+            <div className="w-2 h-2 bg-white/60 rounded-full"></div>
+            <div className="w-2 h-2 bg-white/60 rounded-full"></div>
           </div>
         </div>
-        
-        <div className="p-6">
+      </div>
+      
+      <div className="flex-1 p-6 flex items-center justify-center">
+        <div className="w-full max-w-md">
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
