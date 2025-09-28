@@ -25,12 +25,12 @@ export const PopupHeader: React.FC<PopupHeaderProps> = ({ hideInIframe = false, 
 
   return (
     <div className="bg-terracotta text-white p-5 rounded-b-2xl shadow-lg mb-5">
-      <div className="flex items-start justify-between">
-        <div className="flex items-start flex-shrink-0 min-w-0 flex-1">
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center flex-shrink-0 min-w-0 flex-1">
           <img 
             src={chrome.runtime.getURL('icons/spjot-48.png')} 
             alt="SavvyPro JOT Icon" 
-            className="w-8 h-8 mr-3 mt-0.5 flex-shrink-0"
+            className="w-8 h-8 mr-3 flex-shrink-0"
           />
           <div className="flex flex-col items-start min-w-0">
             <span className="text-2xl font-bold text-white leading-tight">
