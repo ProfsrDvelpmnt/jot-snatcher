@@ -242,7 +242,7 @@ async function updateIframeHeader(userName: string | null, userEmail: string | n
   const supabaseColor = isSupabaseConnected ? 'rgba(34, 197, 94, 0.9)' : 'rgba(239, 68, 68, 0.9)';
   
   title.innerHTML = `
-    <img src="${chrome.runtime.getURL('icons/spjot-48.png')}" style="width: 48px; height: 48px; flex-shrink: 0;" alt="JOT">
+    <img src="${chrome.runtime.getURL('icons/spjot-48.png')}" style="width: 48px; height: 48px; flex-shrink: 0; display: block;" alt="JOT" onerror="console.error('Failed to load icon:', this.src)">
     <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 0;">
       <span style="font-size: 28px; font-weight: 900; line-height: 1.1; margin-bottom: 4px;">Snatcher</span>
       <span style="font-size: 16px; opacity: 0.9; line-height: 1.2; font-weight: 400;">Collects Jobs For <span id="jot-snatcher-webapp-status" style="display: none;">${webappStatus}</span><span id="jot-snatcher-supabase-status" style="display: none;">${supabaseStatus}</span><span id="jot-snatcher-username" style="font-weight: 600; color: rgba(255, 255, 255, 0.95);"></span></span>
@@ -381,11 +381,11 @@ function openIframePanel() {
     align-items: center;
     gap: 16px;
     font-weight: bold;
-    flex: 1;
+    flex-shrink: 0;
     min-width: 0;
   `;
   title.innerHTML = `
-    <img src="${chrome.runtime.getURL('icons/spjot-48.png')}" style="width: 48px; height: 48px; flex-shrink: 0;" alt="JOT">
+    <img src="${chrome.runtime.getURL('icons/spjot-48.png')}" style="width: 48px; height: 48px; flex-shrink: 0; display: block;" alt="JOT" onerror="console.error('Failed to load icon:', this.src)">
     <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 0;">
       <span style="font-size: 28px; font-weight: 900; line-height: 1.1; margin-bottom: 4px;">Snatcher</span>
       <span style="font-size: 16px; opacity: 0.9; line-height: 1.2; font-weight: 400;">Collects Jobs For <span id="jot-snatcher-username" style="font-weight: 600; color: rgba(255, 255, 255, 0.95);"></span></span>
@@ -399,6 +399,7 @@ function openIframePanel() {
     align-items: center;
     flex-shrink: 0;
     margin-left: 20px;
+    max-width: 200px;
   `;
 
   // Fullscreen toggle button
