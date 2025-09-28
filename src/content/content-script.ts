@@ -407,7 +407,7 @@ function openIframePanel() {
   const fullscreenBtn = document.createElement('button');
   fullscreenBtn.innerHTML = '⛶';
   fullscreenBtn.style.cssText = `
-    width: 24px;
+    width: 16px;
     height: 18px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
@@ -472,7 +472,7 @@ function openIframePanel() {
   const minimizeBtn = document.createElement('button');
   minimizeBtn.innerHTML = '⤢';
   minimizeBtn.style.cssText = `
-    width: 24px;
+    width: 16px;
     height: 18px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
@@ -521,7 +521,7 @@ function openIframePanel() {
   const closeBtn = document.createElement('button');
   closeBtn.innerHTML = '×';
   closeBtn.style.cssText = `
-    width: 24px;
+    width: 16px;
     height: 18px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
@@ -610,7 +610,7 @@ function openIframePanel() {
     font-size: 9px;
     font-weight: bold;
     cursor: pointer;
-    min-width: 24px;
+    min-width: 16px;
     height: 18px;
     appearance: none;
     -webkit-appearance: none;
