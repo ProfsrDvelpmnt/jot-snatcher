@@ -395,18 +395,19 @@ function openIframePanel() {
   const controls = document.createElement('div');
   controls.style.cssText = `
     display: flex;
-    gap: 6px;
+    flex-direction: column;
     align-items: center;
+    gap: 4px;
     flex-shrink: 0;
     margin-left: 20px;
-    max-width: 200px;
+    max-width: 60px;
   `;
 
   // Fullscreen toggle button
   const fullscreenBtn = document.createElement('button');
   fullscreenBtn.innerHTML = '⛶';
   fullscreenBtn.style.cssText = `
-    width: 6px;
+    width: 24px;
     height: 18px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
@@ -471,7 +472,7 @@ function openIframePanel() {
   const minimizeBtn = document.createElement('button');
   minimizeBtn.innerHTML = '⤢';
   minimizeBtn.style.cssText = `
-    width: 6px;
+    width: 24px;
     height: 18px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
@@ -520,7 +521,7 @@ function openIframePanel() {
   const closeBtn = document.createElement('button');
   closeBtn.innerHTML = '×';
   closeBtn.style.cssText = `
-    width: 6px;
+    width: 24px;
     height: 18px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
@@ -609,7 +610,7 @@ function openIframePanel() {
     font-size: 9px;
     font-weight: bold;
     cursor: pointer;
-    min-width: 33px;
+    min-width: 24px;
     height: 18px;
     appearance: none;
     -webkit-appearance: none;
