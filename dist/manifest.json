@@ -10,15 +10,34 @@
     "tabs"
   ],
   "host_permissions": [
-    "<all_urls>",
-    "https://aeoyohqyhawxulisdvqj.supabase.co/*"
+    "https://aeoyohqyhawxulisdvqj.supabase.co/*",
+    "https://app.sp-jot.com/*",
+    "https://*.greenhouse.io/*",
+    "https://*.hiring.cafe/*",
+    "https://*.indeed.com/*",
+    "https://*.linkedin.com/*",
+    "https://*.monster.com/*",
+    "https://theladders.com/*",
+    "https://*.workday.com/*",
+    "https://*.ziprecruiter.com/*"
   ],
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": [
+        "https://aeoyohqyhawxulisdvqj.supabase.co/*",
+        "https://app.sp-jot.com/*",
+        "https://*.greenhouse.io/*",
+        "https://*.hiring.cafe/*",
+        "https://*.indeed.com/*",
+        "https://*.linkedin.com/*",
+        "https://*.monster.com/*",
+        "https://theladders.com/*",
+        "https://*.workday.com/*",
+        "https://*.ziprecruiter.com/*"
+      ],
       "js": ["content-script.js"],
       "run_at": "document_end"
     }
@@ -41,7 +60,18 @@
   "web_accessible_resources": [
     {
       "resources": ["icons/*", "floating-button.js", "src/iframe/index.html", "src/iframe/iframe.js", "jspdf.umd.min.js", "html2canvas.min.js"],
-      "matches": ["<all_urls>"]
+      "matches": [
+        "https://aeoyohqyhawxulisdvqj.supabase.co/*",
+        "https://app.sp-jot.com/*",
+        "https://*.greenhouse.io/*",
+        "https://*.hiring.cafe/*",
+        "https://*.indeed.com/*",
+        "https://*.linkedin.com/*",
+        "https://*.monster.com/*",
+        "https://theladders.com/*",
+        "https://*.workday.com/*",
+        "https://*.ziprecruiter.com/*"
+      ]
     }
   ]
 }
