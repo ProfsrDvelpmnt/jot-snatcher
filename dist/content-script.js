@@ -80,7 +80,7 @@ ${o.additionalNotes.join(`
     padding: 20px 24px;
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     min-height: 100px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
@@ -100,11 +100,9 @@ ${o.additionalNotes.join(`
   `;const r=document.createElement("div");r.style.cssText=`
     display: flex;
     gap: 12px;
-    align-items: flex-start;
+    align-items: center;
     flex-shrink: 0;
     margin-left: 20px;
-    padding-top: 6px;
-    margin-top: -8px;
   `;const i=document.createElement("button");i.innerHTML="⛶",i.style.cssText=`
     width: 30px;
     height: 30px;
