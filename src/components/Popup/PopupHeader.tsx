@@ -41,10 +41,10 @@ export const PopupHeader: React.FC<PopupHeaderProps> = ({ hideInIframe = false, 
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+        <div className="flex items-center gap-1.5 flex-shrink-0 ml-4">
           <button
             onClick={() => window.close()}
-            className="w-6 h-6 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center text-sm font-bold transition-all duration-200 hover:scale-110"
+            className="w-[18px] h-[18px] rounded bg-white/20 hover:bg-white/30 text-white flex items-center justify-center text-xs font-bold transition-all duration-200 hover:scale-110"
             title="Close"
           >
             ×
@@ -52,7 +52,7 @@ export const PopupHeader: React.FC<PopupHeaderProps> = ({ hideInIframe = false, 
           <select 
             value={theme} 
             onChange={(e) => toggleTheme(e.target.value as 'light' | 'dark')}
-            className="bg-muted-purple border-2 border-accent text-white px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-all hover:bg-accent hover:border-rose-gold hover:-translate-y-0.5 hover:shadow-lg min-w-[100px] shadow-md"
+            className="bg-muted-purple border border-accent text-white px-1.5 py-0.5 rounded text-[9px] font-semibold cursor-pointer transition-all hover:bg-accent hover:border-rose-gold min-w-[50px] h-[18px]"
           >
             {THEME_OPTIONS.map((option: any) => (
               <option key={option.value} value={option.value}>
