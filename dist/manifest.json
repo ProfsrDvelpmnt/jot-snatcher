@@ -11,18 +11,7 @@
   ],
   "host_permissions": [
     "<all_urls>",
-    "https://sp-jot-platform.vercel.app/*",
-    "https://*.github.io/*",
-    "https://*.greenhouse.io/*",
-    "https://*.hiring.cafe/*",
-    "https://*.indeed.com/*",
-    "https://*.linkedin.com/*",
-    "https://*.monster.com/*",
-    "https://*.netlify.app/*",
-    "https://*.vercel.app/*",
-    "https://*.ziprecruiter.com/*",
-    "https://aeoyohqyhawxulisdvqj.supabase.co/*",
-    "https://theladders.com/*"
+    "https://aeoyohqyhawxulisdvqj.supabase.co/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -35,13 +24,15 @@
     }
   ],
   "action": {
-    "default_title": "JOT Snatcher - Use the floating panel",
+    "default_popup": "src/popup/index.html",
+    "default_title": "JOT Snatcher",
     "default_icon": {
       "16": "icons/spjot-16.png",
       "48": "icons/spjot-48.png",
       "128": "icons/spjot-128.png"
     }
   },
+  "options_page": "src/options/index.html",
   "icons": {
     "16": "icons/spjot-16.png",
     "48": "icons/spjot-48.png",
@@ -49,7 +40,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["icons/*", "floating-button.js", "jspdf.umd.min.js", "html2canvas.min.js", "src/iframe/index.html"],
+      "resources": ["icons/*", "floating-button.js", "src/iframe/index.html", "src/iframe/iframe.js", "jspdf.umd.min.js", "html2canvas.min.js"],
       "matches": ["<all_urls>"]
     }
   ]
