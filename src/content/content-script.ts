@@ -242,7 +242,7 @@ async function updateIframeHeader(userName: string | null, userEmail: string | n
   const supabaseColor = isSupabaseConnected ? 'rgba(34, 197, 94, 0.9)' : 'rgba(239, 68, 68, 0.9)';
   
   title.innerHTML = `
-    <img src="${chrome.runtime.getURL('icons/spjot-48.png')}" style="width: 48px; height: 48px; flex-shrink: 0; margin-top: -6px;" alt="JOT">
+    <img src="${chrome.runtime.getURL('icons/spjot-48.png')}" style="width: 48px; height: 48px; flex-shrink: 0;" alt="JOT">
     <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 0;">
       <span style="font-size: 28px; font-weight: 900; line-height: 1.1; margin-bottom: 4px;">Snatcher</span>
       <span style="font-size: 16px; opacity: 0.9; line-height: 1.2; font-weight: 400;">Collects Jobs For <span id="jot-snatcher-webapp-status" style="display: none;">${webappStatus}</span><span id="jot-snatcher-supabase-status" style="display: none;">${supabaseStatus}</span><span id="jot-snatcher-username" style="font-weight: 600; color: rgba(255, 255, 255, 0.95);"></span></span>
@@ -385,7 +385,7 @@ function openIframePanel() {
     min-width: 0;
   `;
   title.innerHTML = `
-    <img src="${chrome.runtime.getURL('icons/spjot-48.png')}" style="width: 48px; height: 48px; flex-shrink: 0; margin-top: -6px;" alt="JOT">
+    <img src="${chrome.runtime.getURL('icons/spjot-48.png')}" style="width: 48px; height: 48px; flex-shrink: 0;" alt="JOT">
     <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 0;">
       <span style="font-size: 28px; font-weight: 900; line-height: 1.1; margin-bottom: 4px;">Snatcher</span>
       <span style="font-size: 16px; opacity: 0.9; line-height: 1.2; font-weight: 400;">Collects Jobs For <span id="jot-snatcher-username" style="font-weight: 600; color: rgba(255, 255, 255, 0.95);"></span></span>
