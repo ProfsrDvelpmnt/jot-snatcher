@@ -1,1 +1,1 @@
-import"./assets/jsx-runtime-B795doXq.js";import"./assets/api-CYmxGqVo.js";console.log("Floating button script loaded");
+import"./assets/jsx-runtime-Qo1ar1Nj.js";import"./assets/api-Cyba7CW6.js";

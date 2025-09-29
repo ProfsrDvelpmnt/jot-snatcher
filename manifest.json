@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "JOT Snatcher",
   "version": "1.0.0",
-  "description": "Modern Chrome extension for job collection with Tailwind CSS and TypeScript",
+  "description": "A Modern Chrome extension that Transforms Your Job Search with One-Click Job Capture",
   "permissions": [
     "storage",
     "activeTab",
