@@ -59,7 +59,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["icons/*", "floating-button.js", "src/iframe/index.html", "src/iframe/iframe.js", "jspdf.umd.min.js", "html2canvas.min.js"],
+      "resources": ["icons/*", "floating-button.js", "src/iframe/index.html", "src/iframe/iframe.js"],
       "matches": [
         "https://aeoyohqyhawxulisdvqj.supabase.co/*",
         "https://app.sp-jot.com/*",

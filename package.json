@@ -7,9 +7,8 @@
     "dev": "vite",
     "dev:api": "node api-server.js",
     "dev:full": "concurrently \"npm run dev:api\" \"npm run dev\"",
-    "build": "tsc && vite build && npm run download-pdf-libs",
-    "build:production": "tsc && vite build --config vite.config.production.ts && npm run download-pdf-libs",
-    "download-pdf-libs": "curl -o dist/jspdf.umd.min.js https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js && curl -o dist/html2canvas.min.js https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+    "build": "tsc && vite build",
+    "build:production": "tsc && vite build --config vite.config.production.ts",
     "preview": "vite preview",
     "type-check": "tsc --noEmit"
   },
@@ -17,12 +16,15 @@
     "@supabase/supabase-js": "^2.57.4",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "html2canvas": "^1.4.1",
     "jsdom": "^27.0.0",
+    "jspdf": "2.5.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.254",
+    "@types/html2canvas": "^0.5.35",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@typescript-eslint/eslint-plugin": "^6.14.0",

@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
-import { copyFileSync, mkdirSync, existsSync } from 'fs'
+import { copyFileSync, mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync } from 'fs'
 
 export default defineConfig({
   plugins: [
@@ -54,6 +54,52 @@ export default defineConfig({
         if (existsSync('src/background/background-standalone.js')) {
           copyFileSync('src/background/background-standalone.js', 'dist/background.js');
           console.log('✅ Copied standalone background script to dist/background.js');
+        }
+      }
+    },
+    // Plugin to remove CDN URLs from jsPDF for Manifest V3 compliance
+    {
+      name: 'remove-cdn-urls',
+      writeBundle() {
+        console.log('🔍 Scanning for CDN URLs in bundled files...');
+        const distAssetsPath = 'dist/assets';
+        
+        if (!existsSync(distAssetsPath)) {
+          return;
+        }
+
+        const files = readdirSync(distAssetsPath);
+        let foundAndRemoved = false;
+
+        files.forEach(file => {
+          if (file.endsWith('.js')) {
+            const filePath = `${distAssetsPath}/${file}`;
+            let content = readFileSync(filePath, 'utf-8');
+            
+            // Check if file contains the CDN URL
+            if (content.includes('cdnjs.cloudflare.com')) {
+              console.log(`⚠️  Found CDN URL in: ${file}`);
+              
+              // Replace the pdfobjectnewwindow case to return undefined instead of loading external script
+              content = content.replace(
+                /case"pdfobjectnewwindow":if\(Object\.prototype\.toString\.call\([^)]+\)==="\[object Window\]"\)\{var [A-Za-z]="https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/pdfobject\/[^"]+"/g,
+                'case"pdfobjectnewwindow":if(false){var Z="'
+              );
+              
+              // Also remove any other cdnjs.cloudflare.com references
+              content = content.replace(/https:\/\/cdnjs\.cloudflare\.com[^"']*/g, '');
+              
+              writeFileSync(filePath, content, 'utf-8');
+              console.log(`✅ Removed CDN URLs from: ${file}`);
+              foundAndRemoved = true;
+            }
+          }
+        });
+
+        if (foundAndRemoved) {
+          console.log('✅ All CDN URLs removed - Manifest V3 compliant!');
+        } else {
+          console.log('✅ No CDN URLs found - already compliant!');
         }
       }
     }
