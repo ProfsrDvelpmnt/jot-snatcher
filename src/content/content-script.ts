@@ -393,14 +393,14 @@ function openIframePanel() {
   const fullscreenBtn = document.createElement('button');
   fullscreenBtn.innerHTML = '⛶';
   fullscreenBtn.style.cssText = `
-    width: 18px !important;
-    height: 18px;
+    width: 24px !important;
+    height: 24px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
     color: white;
     border-radius: 3px;
     cursor: pointer;
-    font-size: 10px;
+    font-size: 14px;
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -459,14 +459,14 @@ function openIframePanel() {
   const minimizeBtn = document.createElement('button');
   minimizeBtn.innerHTML = '⤢';
   minimizeBtn.style.cssText = `
-    width: 18px !important;
-    height: 18px;
+    width: 24px !important;
+    height: 24px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
     color: white;
     border-radius: 3px;
     cursor: pointer;
-    font-size: 10px;
+    font-size: 14px;
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -508,14 +508,14 @@ function openIframePanel() {
   const closeBtn = document.createElement('button');
   closeBtn.innerHTML = '×';
   closeBtn.style.cssText = `
-    width: 18px !important;
-    height: 18px;
+    width: 24px !important;
+    height: 24px;
     border: none;
     background: rgba(255, 255, 255, 0.15);
     color: white;
     border-radius: 3px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -594,11 +594,11 @@ function openIframePanel() {
     border: 1px solid rgba(255, 255, 255, 0.3) !important;
     border-radius: 3px;
     padding: 1px 3px;
-    font-size: 9px;
+    font-size: 14px;
     font-weight: bold;
     cursor: pointer;
-    min-width: 18px !important;
-    height: 18px;
+    min-width: 24px !important;
+    height: 24px;
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;

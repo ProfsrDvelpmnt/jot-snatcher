@@ -5,9 +5,7 @@
   "description": "A Modern Chrome extension that Transforms Your Job Search with One-Click Job Capture",
   "permissions": [
     "storage",
-    "activeTab",
-    "scripting",
-    "tabs"
+    "activeTab"
   ],
   "host_permissions": [
     "https://aeoyohqyhawxulisdvqj.supabase.co/*",

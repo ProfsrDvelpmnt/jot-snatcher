@@ -51,14 +51,16 @@ export const UsageStatus: React.FC<UsageStatusProps> = ({ usageData, onRefresh }
 
   return (
     <div 
-      className={`flex items-center justify-center px-3 py-2 rounded-lg border text-sm font-medium text-center flex-1 min-w-0 relative ${colorInfo.bgColor} ${colorInfo.textColor} ${colorInfo.borderColor}`}
+      className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg border text-sm font-medium text-center flex-1 min-w-0 relative ${colorInfo.bgColor} ${colorInfo.textColor} ${colorInfo.borderColor}`}
       title={`Usage: ${currentUsage}/${monthlyLimit} (${remainingUses} remaining)${tier ? ` | Plan: ${tier}` : ''}`}
     >
-      <span className="flex items-center justify-center gap-0.75">
+      <div className="flex items-center justify-center gap-1">
         <span className="text-xs flex-shrink-0">{colorInfo.icon}</span>
-        <span className="text-center">USAGE: {currentUsage}/{monthlyLimit}{warningIcon}</span>
-        <span className="w-3 flex-shrink-0"></span>
-      </span>
+        <span className="text-center">USAGE:</span>
+      </div>
+      <div className="text-center font-bold">
+        {currentUsage}/{monthlyLimit}{warningIcon}
+      </div>
       {onRefresh && (
         <button
           onClick={onRefresh}
