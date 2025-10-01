@@ -80,14 +80,14 @@ export default defineConfig({
             if (content.includes('cdnjs.cloudflare.com')) {
               console.log(`⚠️  Found CDN URL in: ${file}`);
               
-              // Replace the pdfobjectnewwindow case to return undefined instead of loading external script
+              // Replace the pdfobjectnewwindow case to just throw an error instead of loading external script
               content = content.replace(
-                /case"pdfobjectnewwindow":if\(Object\.prototype\.toString\.call\([^)]+\)==="\[object Window\]"\)\{var [A-Za-z]="https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/pdfobject\/[^"]+"/g,
-                'case"pdfobjectnewwindow":if(false){var Z="'
+                /case"pdfobjectnewwindow":[^;]+;[^}]+\{[^}]+https:\/\/cdnjs\.cloudflare\.com[^}]+\}[^;]+;/g,
+                'case"pdfobjectnewwindow":throw new Error("pdfobjectnewwindow is not supported");'
               );
               
-              // Also remove any other cdnjs.cloudflare.com references
-              content = content.replace(/https:\/\/cdnjs\.cloudflare\.com[^"']*/g, '');
+              // Remove any remaining cdnjs.cloudflare.com references
+              content = content.replace(/https:\/\/cdnjs\.cloudflare\.com[^"'\s]*/g, 'REMOVED_CDN_URL');
               
               writeFileSync(filePath, content, 'utf-8');
               console.log(`✅ Removed CDN URLs from: ${file}`);
