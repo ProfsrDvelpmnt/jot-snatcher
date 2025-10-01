@@ -234,8 +234,11 @@ export class PDFExporter {
     pdf.setFontSize(fontSize);
     pdf.setFont('helvetica', 'normal');
 
+    // Strip HTML tags and decode HTML entities from description
+    const cleanDescription = this.stripHtml(description);
+
     // Split description into lines that fit within content width
-    const lines = pdf.splitTextToSize(description, contentWidth);
+    const lines = pdf.splitTextToSize(cleanDescription, contentWidth);
     
     for (const line of lines) {
       // Check if we need a new page
@@ -266,6 +269,24 @@ export class PDFExporter {
     const centerX = marginMM + (contentWidth / 2) - (textWidth / 2);
     
     pdf.text(pageText, centerX, footerY);
+  }
+
+  // Strip HTML tags and decode HTML entities
+  private static stripHtml(html: string): string {
+    // Create a temporary div element to parse HTML
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    
+    // Get text content (automatically strips tags and decodes entities)
+    let text = temp.textContent || temp.innerText || '';
+    
+    // Clean up excessive whitespace and newlines
+    text = text
+      .replace(/\n\s*\n\s*\n/g, '\n\n') // Replace 3+ newlines with 2
+      .replace(/[ \t]+/g, ' ') // Replace multiple spaces/tabs with single space
+      .trim();
+    
+    return text;
   }
 
   // Generate filename with company name and date
