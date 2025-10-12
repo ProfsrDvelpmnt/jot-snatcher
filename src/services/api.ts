@@ -43,6 +43,7 @@ export interface JobSubmission {
   stage: string; // 'Saved', 'Applying', 'Applied', 'Contacted', 'Interviewing', 'Offer'
   source: string; // 'indeed', 'linkedin', 'glassdoor', etc.
   job_site: string; // 'Indeed', 'LinkedIn', 'Glassdoor', etc.
+  description?: string | null; // Optional: Job description text
   
   // Dates
   date_saved: string;
@@ -318,10 +319,45 @@ export class ApiService {
     }
   }
 
+  // Helper function to convert HTML to plain text
+  private htmlToPlainText(html: string): string {
+    // Create a temporary DOM element to parse HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    
+    // Remove script and style elements
+    const scriptsAndStyles = tempDiv.querySelectorAll('script, style');
+    scriptsAndStyles.forEach(el => el.remove());
+    
+    // Get the text content
+    let text = tempDiv.textContent || '';
+    
+    // Clean up the text:
+    // 1. Replace multiple spaces with a single space
+    text = text.replace(/\s+/g, ' ');
+    
+    // 2. Replace multiple newlines with double newlines for paragraph separation
+    text = text.replace(/\n\s*\n\s*\n+/g, '\n\n');
+    
+    // 3. Trim whitespace from start and end
+    text = text.trim();
+    
+    return text;
+  }
+
   // Submit job data using direct Supabase connection
   async submitJob(jobData: JobSubmission): Promise<{ success: boolean; error?: string; usageInfo?: any; job?: any }> {
     try {
       console.log('📝 API Service: Submitting job via direct Supabase connection');
+      console.log('📝 API Service: Original description (HTML):', jobData.description?.substring(0, 200));
+      
+      // Convert description from HTML to plain text for database storage
+      const plainTextDescription = jobData.description 
+        ? this.htmlToPlainText(jobData.description)
+        : null;
+      
+      console.log('📝 API Service: Converted description (plain text):', plainTextDescription?.substring(0, 200));
+      console.log('📝 API Service: Plain text description length:', plainTextDescription?.length || 0);
       
       // Convert to kanban format
       const kanbanJobData = {
@@ -331,6 +367,7 @@ export class ApiService {
         location: jobData.location || null,
         type: jobData.type || 'Full Time',
         environment: jobData.environment || 'Remote',
+        description: plainTextDescription, // Use plain text version for database
         salary_type: jobData.salary_type || null,
         salary_min: jobData.salary_min || null,
         salary_max: jobData.salary_max || null,
@@ -340,6 +377,8 @@ export class ApiService {
         date_saved: jobData.date_saved || new Date().toISOString(),
         stage: jobData.stage || 'Saved'
       };
+      
+      console.log('📝 API Service: Kanban data with description:', kanbanJobData.description?.substring(0, 200));
 
       // Use direct Supabase auth service to submit job
       const result = await directSupabaseAuth.submitJob(kanbanJobData);

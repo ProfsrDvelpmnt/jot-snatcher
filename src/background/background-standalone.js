@@ -605,6 +605,52 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             
             // Also submit to main jobs table for webapp display
             try {
+              // Convert HTML description to plain text before sending to database
+              let plainTextDescription = null;
+              if (message.jobData.description) {
+                try {
+                  // Manual HTML to plain text conversion (without DOM)
+                  let text = message.jobData.description;
+                  
+                  // Remove script and style tags and their content
+                  text = text.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+                  text = text.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
+                  
+                  // Replace common block elements with line breaks
+                  text = text.replace(/<\/(div|p|br|h1|h2|h3|h4|h5|h6|li|tr)>/gi, '\n');
+                  text = text.replace(/<br\s*\/?>/gi, '\n');
+                  
+                  // Replace list items with bullet points
+                  text = text.replace(/<li[^>]*>/gi, '\n• ');
+                  
+                  // Remove all remaining HTML tags
+                  text = text.replace(/<[^>]+>/g, '');
+                  
+                  // Decode HTML entities
+                  text = text.replace(/&nbsp;/g, ' ');
+                  text = text.replace(/&amp;/g, '&');
+                  text = text.replace(/&lt;/g, '<');
+                  text = text.replace(/&gt;/g, '>');
+                  text = text.replace(/&quot;/g, '"');
+                  text = text.replace(/&#39;/g, "'");
+                  text = text.replace(/&apos;/g, "'");
+                  
+                  // Clean up whitespace
+                  text = text.replace(/\n\s*\n\s*\n/g, '\n\n'); // Max 2 consecutive newlines
+                  text = text.replace(/[ \t]+/g, ' '); // Multiple spaces to single space
+                  text = text.replace(/^\s+|\s+$/gm, ''); // Trim each line
+                  text = text.trim();
+                  
+                  plainTextDescription = text;
+                  
+                  console.log('📝 Background: Converted HTML description to plain text');
+                  console.log('📝 Background: Plain text length:', plainTextDescription.length);
+                } catch (conversionError) {
+                  console.error('❌ Background: Error converting description:', conversionError);
+                  plainTextDescription = message.jobData.description; // Fallback to original
+                }
+              }
+              
               const mainJobData = {
                 user_id: authState.userId,
                 position: message.jobData.position || 'Unknown Position',
@@ -612,6 +658,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 location: message.jobData.location || null,
                 link: message.jobData.link || null,
                 salary: message.jobData.salary || null,
+                description: plainTextDescription, // Add plain text description
                 type: (message.jobData.type && ['Full Time', 'Part Time', 'Contract', 'Seasonal'].includes(message.jobData.type)) 
                   ? message.jobData.type 
                   : 'Full Time',
@@ -622,9 +669,12 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 job_source: 'extension',
                 source: message.jobData.source || 'chrome_extension',
                 date_posted: message.jobData.date_posted || null,
+                date_saved: message.jobData.date_saved || new Date().toISOString(), // Add date_saved field
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
               };
+              
+              console.log('📝 Background: Main job data includes description:', !!mainJobData.description);
               
               console.log('📤 Background: Submitting to main jobs table:', mainJobData);
               console.log('📤 Background: Jobs table URL:', `${supabaseAuth.SUPABASE_URL}/rest/v1/jobs`);
@@ -667,6 +717,49 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
               console.log('📤 Background: Original job data organization:', message.jobData.organization);
               console.log('📤 Background: Original job data position:', message.jobData.position);
               
+              // Convert HTML description to plain text for Edge Function as well
+              let edgeFunctionPlainTextDescription = null;
+              if (message.jobData.description) {
+                try {
+                  // Manual HTML to plain text conversion (without DOM)
+                  let text = message.jobData.description;
+                  
+                  // Remove script and style tags and their content
+                  text = text.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+                  text = text.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
+                  
+                  // Replace common block elements with line breaks
+                  text = text.replace(/<\/(div|p|br|h1|h2|h3|h4|h5|h6|li|tr)>/gi, '\n');
+                  text = text.replace(/<br\s*\/?>/gi, '\n');
+                  
+                  // Replace list items with bullet points
+                  text = text.replace(/<li[^>]*>/gi, '\n• ');
+                  
+                  // Remove all remaining HTML tags
+                  text = text.replace(/<[^>]+>/g, '');
+                  
+                  // Decode HTML entities
+                  text = text.replace(/&nbsp;/g, ' ');
+                  text = text.replace(/&amp;/g, '&');
+                  text = text.replace(/&lt;/g, '<');
+                  text = text.replace(/&gt;/g, '>');
+                  text = text.replace(/&quot;/g, '"');
+                  text = text.replace(/&#39;/g, "'");
+                  text = text.replace(/&apos;/g, "'");
+                  
+                  // Clean up whitespace
+                  text = text.replace(/\n\s*\n\s*\n/g, '\n\n');
+                  text = text.replace(/[ \t]+/g, ' ');
+                  text = text.replace(/^\s+|\s+$/gm, '');
+                  text = text.trim();
+                  
+                  edgeFunctionPlainTextDescription = text;
+                } catch (conversionError) {
+                  console.error('❌ Background: Error converting description for Edge Function:', conversionError);
+                  edgeFunctionPlainTextDescription = message.jobData.description;
+                }
+              }
+              
               // Prepare job data for Edge Function (simplified format to match old extension)
               const edgeFunctionJobData = {
                 organization: message.jobData.organization || 'Unknown Company',
@@ -676,12 +769,14 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 type: message.jobData.type || 'Full Time',
                 environment: message.jobData.environment || 'Remote',
                 link: message.jobData.link || null,
-                description: message.jobData.description || null,
+                description: edgeFunctionPlainTextDescription, // Use plain text version
                 source: 'extension',
                 user_id: authState.userId
               };
               
               console.log('📤 Background: Edge Function job data:', edgeFunctionJobData);
+              console.log('📤 Background: Edge Function includes description:', !!edgeFunctionJobData.description);
+              console.log('📤 Background: Edge Function description length:', edgeFunctionJobData.description?.length || 0);
               console.log('📤 Background: Edge Function job data organization:', edgeFunctionJobData.organization);
               console.log('📤 Background: Edge Function job data position:', edgeFunctionJobData.position);
               console.log('📤 Background: Edge Function job data user_id:', edgeFunctionJobData.user_id);

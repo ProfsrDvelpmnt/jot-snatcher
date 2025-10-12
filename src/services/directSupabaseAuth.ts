@@ -596,15 +596,22 @@ export class DirectSupabaseAuthService {
         return { success: false, error: 'User not authenticated' };
       }
 
-      console.log('📝 DirectSupabaseAuth: Submitting job:', jobData);
+      console.log('📝 DirectSupabaseAuth: Submitting job with data:', jobData);
+      console.log('📝 DirectSupabaseAuth: Description field value:', jobData.description);
+      console.log('📝 DirectSupabaseAuth: Description length:', jobData.description?.length || 0);
+
+      const jobToInsert = {
+        user_id: this.authState.userId,
+        ...jobData,
+        date_saved: new Date().toISOString()
+      };
+
+      console.log('📝 DirectSupabaseAuth: Final job object to insert:', jobToInsert);
+      console.log('📝 DirectSupabaseAuth: Description in final object:', jobToInsert.description);
 
       const { data, error } = await supabase
         .from('jobs')
-        .insert({
-          user_id: this.authState.userId,
-          ...jobData,
-          date_saved: new Date().toISOString()
-        })
+        .insert(jobToInsert)
         .select()
         .single();
 
@@ -617,6 +624,7 @@ export class DirectSupabaseAuthService {
       }
 
       console.log('✅ DirectSupabaseAuth: Job submitted successfully:', data);
+      console.log('✅ DirectSupabaseAuth: Description in returned data:', data.description);
       
       // Refresh user data to update usage stats
       await this.refreshUserData();

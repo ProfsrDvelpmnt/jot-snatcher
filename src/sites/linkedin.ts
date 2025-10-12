@@ -269,8 +269,8 @@ export class LinkedInExtractor extends JobExtractor {
       const element = container.querySelector(selector);
       if (element) {
         console.log(`✅ Found description with selector: ${selector}`);
-        // Preserve HTML formatting for better readability
-        return element.innerHTML || element.textContent || '';
+        // Return HTML content to preserve formatting in the UI
+        return element.innerHTML || element.textContent?.trim() || '';
       }
     }
     
@@ -280,13 +280,37 @@ export class LinkedInExtractor extends JobExtractor {
       const element = document.querySelector(selector);
       if (element) {
         console.log(`✅ Found description in document with selector: ${selector}`);
-        // Preserve HTML formatting for better readability
-        return element.innerHTML || element.textContent || '';
+        // Return HTML content to preserve formatting in the UI
+        return element.innerHTML || element.textContent?.trim() || '';
       }
     }
     
     console.log('❌ No description element found with any selector');
     return '';
+  }
+
+  private htmlToPlainText(element: Element): string {
+    // Clone the element to avoid modifying the original DOM
+    const clone = element.cloneNode(true) as Element;
+    
+    // Remove script and style elements
+    const scriptsAndStyles = clone.querySelectorAll('script, style');
+    scriptsAndStyles.forEach(el => el.remove());
+    
+    // Get the text content
+    let text = clone.textContent || '';
+    
+    // Clean up the text:
+    // 1. Replace multiple spaces with a single space
+    text = text.replace(/\s+/g, ' ');
+    
+    // 2. Replace multiple newlines with double newlines for paragraph separation
+    text = text.replace(/\n\s*\n\s*\n+/g, '\n\n');
+    
+    // 3. Trim whitespace from start and end
+    text = text.trim();
+    
+    return text;
   }
 
   private generateJobId(): string {

@@ -484,7 +484,7 @@ function openIframePanel() {
     minimizeBtn.style.transform = 'scale(1)';
   };
   minimizeBtn.onclick = () => {
-    const isMinimized = iframeContainer.style.height === '60px';
+    const isMinimized = iframeContainer.style.height === '100px';
     if (isMinimized) {
       // Expand to full viewport height
       const fullHeight = window.innerHeight + 'px';
@@ -495,9 +495,9 @@ function openIframePanel() {
       minimizeBtn.innerHTML = '⤡';
       minimizeBtn.title = 'Minimize';
     } else {
-      // Minimize
-      iframeContainer.style.height = '60px';
-      iframeContainer.style.maxHeight = '60px';
+      // Minimize to header height (under the subtitle)
+      iframeContainer.style.height = '100px';
+      iframeContainer.style.maxHeight = '100px';
       minimizeBtn.innerHTML = '⤢';
       minimizeBtn.title = 'Expand';
     }
@@ -1638,14 +1638,11 @@ function injectLoginPrompt() {
   const loginContainer = document.createElement('div');
   loginContainer.id = 'jot-snatcher-login-prompt';
   
-  // Set initial position (center of screen)
-  const centerX = (window.innerWidth - 320) / 2;
-  const centerY = (window.innerHeight - 400) / 2;
-  
+  // Set initial position (top right of screen)
   loginContainer.style.cssText = `
     position: fixed;
-    top: ${Math.max(20, centerY)}px;
-    left: ${Math.max(20, centerX)}px;
+    top: ${promptTop};
+    right: 20px;
     width: 320px;
     background: rgba(186, 116, 95, 0.95);
     border: 2px solid rgba(216, 178, 167, 0.8);
@@ -1741,10 +1738,11 @@ function injectLoginPrompt() {
       
       // Keep within viewport bounds
       const maxX = window.innerWidth - 320;
-      const maxY = window.innerHeight - 400;
+      const maxY = window.innerHeight - loginContainer.offsetHeight;
       
       loginContainer.style.left = Math.max(0, Math.min(newX, maxX)) + 'px';
       loginContainer.style.top = Math.max(0, Math.min(newY, maxY)) + 'px';
+      loginContainer.style.right = 'auto'; // Override right positioning when dragging
     }
   });
 

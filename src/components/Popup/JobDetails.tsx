@@ -152,7 +152,22 @@ export const JobDetails: React.FC<JobDetailsProps> = ({
       {jobData && (
         <div className="space-y-3">
           {JOB_FIELDS.map((field: any) => {
-            const value = jobData[field.key as keyof JobData] || 'N/A';
+            let value = jobData[field.key as keyof JobData] || 'N/A';
+            
+            // Format date_saved field for display (MM/DD/YYYY format)
+            if (field.key === 'date_saved' && value && value !== 'N/A') {
+              try {
+                const date = new Date(value as string);
+                // Format as MM/DD/YYYY to match other status dates
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const year = date.getFullYear();
+                value = `${month}/${day}/${year}`;
+              } catch (error) {
+                console.error('❌ Error formatting date:', error);
+              }
+            }
+            
             const isEditing = editingField === field.key;
             
             return (

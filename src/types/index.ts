@@ -44,7 +44,7 @@ export interface JobData {
   workType?: string;
   ageOfPosting?: string;
   numApplicants?: string;
-  description?: string;
+  description?: string | null;
 }
 
 export interface UsageData {

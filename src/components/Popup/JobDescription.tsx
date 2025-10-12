@@ -32,7 +32,7 @@ export const JobDescription: React.FC<JobDescriptionProps> = ({ jobData, onUpdat
     setEditValue('');
   };
 
-  if (!jobData?.description && !isEditing) {
+  if ((!jobData?.description || jobData.description.trim() === '') && !isEditing) {
     return (
       <div className="px-4 py-8 text-center text-light-text-secondary dark:text-dark-text-secondary">
         <div className="text-4xl mb-2">📝</div>

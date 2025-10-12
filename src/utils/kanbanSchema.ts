@@ -11,6 +11,7 @@ export interface KanbanJobData {
   location?: string | null;       // Optional
   type?: string | null;           // Optional (Full Time, Part Time, Contract, etc.)
   environment?: string | null;    // Optional (Remote, Hybrid, On-site)
+  description?: string | null;    // Optional: Job description text
   
   // Enhanced fields (New Features)
   salary_type?: 'annual' | 'hourly' | 'monthly' | 'contract' | null;  // Optional
@@ -166,6 +167,7 @@ export function convertToKanbanFormat(jobData: any): KanbanJobData {
     location: jobData.location || null,
     type: jobData.type || 'Full Time',
     environment: jobData.environment || 'Remote',
+    description: jobData.description || null,
     
     // Enhanced fields
     salary_type: parseSalaryType(jobData.salary),
@@ -297,6 +299,7 @@ export function getDefaultKanbanJobData(): KanbanJobData {
     location: null,
     type: 'Full Time',
     environment: 'Remote',
+    description: null,
     salary_type: null,
     salary_min: null,
     salary_max: null,
