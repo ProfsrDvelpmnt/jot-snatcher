@@ -231,8 +231,8 @@ class DirectSupabaseAuthService {
       
       console.log('📊 Background: Current usage from extension_usage:', currentUsage);
       
-      // Get subscription info
-      const subscriptionResponse = await fetch(`${this.SUPABASE_URL}/rest/v1/subscriptions?select=*&user_id=eq.${user.id}&status=eq.active`, {
+      // Get subscription info - try without status filter first to see all subscriptions
+      const subscriptionResponse = await fetch(`${this.SUPABASE_URL}/rest/v1/subscriptions?select=*&user_id=eq.${user.id}&order=created_at.desc&limit=1`, {
         headers: {
           'apikey': this.SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${this.SUPABASE_ANON_KEY}`,
@@ -242,6 +242,12 @@ class DirectSupabaseAuthService {
       
       const subscriptions = await subscriptionResponse.json();
       const subscription = subscriptions?.[0];
+      
+      console.log('🔍 Background: Subscription query result:', {
+        hasSubscription: !!subscription,
+        subscription: subscription,
+        allSubscriptions: subscriptions
+      });
       
       // Usage already calculated from extension_usage view above
       const plan = subscription?.plan;
