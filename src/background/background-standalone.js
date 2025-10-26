@@ -204,11 +204,37 @@ class DirectSupabaseAuthService {
     try {
       console.log('🔍 DirectSupabaseAuth: Loading user data for:', user.id);
       
-      // Get user profile
-      const profileResponse = await fetch(`${this.SUPABASE_URL}/rest/v1/profiles?select=*&id=eq.${user.id}`, {
+      // Get access token for authenticated requests
+      const sessionResponse = await fetch(`${this.SUPABASE_URL}/rest/v1/extension_job_submissions?select=id&user_id=eq.${user.id}&limit=1`, {
         headers: {
           'apikey': this.SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${this.SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // Try to get user's access token from stored session
+      const storageResult = await chrome.storage.local.get(['sb-aeoyohqyhawxulisdvqj-auth-token']);
+      const tokenData = storageResult['sb-aeoyohqyhawxulisdvqj-auth-token'];
+      let userAccessToken = this.SUPABASE_ANON_KEY;
+      
+      if (tokenData) {
+        try {
+          const parsed = JSON.parse(tokenData);
+          if (parsed.currentSession?.access_token) {
+            userAccessToken = parsed.currentSession.access_token;
+            console.log('🔑 Using user access token for profile query');
+          }
+        } catch (e) {
+          console.log('⚠️ Could not parse stored token');
+        }
+      }
+      
+      // Get user profile using user's access token for authenticated request
+      const profileResponse = await fetch(`${this.SUPABASE_URL}/rest/v1/profiles?select=*&id=eq.${user.id}`, {
+        headers: {
+          'apikey': this.SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${userAccessToken}`,
           'Content-Type': 'application/json'
         }
       });
@@ -216,12 +242,19 @@ class DirectSupabaseAuthService {
       const profiles = await profileResponse.json();
       const profile = profiles?.[0];
       
+      console.log('🔍 Full Profile Response:', JSON.stringify(profiles, null, 2));
+      console.log('🔍 Profile data:', JSON.stringify(profile, null, 2));
+      console.log('  - Profile subscription_tier:', profile?.subscription_tier);
+      console.log('  - Profile tier:', profile?.tier);
+      console.log('  - Profile plan:', profile?.plan);
+      console.log('  - All profile keys:', profile ? Object.keys(profile) : 'no profile');
+      
       // Get user's usage for current month from extension_usage view
       const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-      const usageResponse = await fetch(`${this.SUPABASE_URL}/rest/v1/extension_usage?select=usage_count&user_id=eq.${user.id}&usage_month=eq.${currentMonth}`, {
+      const usageResponse = await fetch(`${this.SUPABASE_URL}/rest/v1/extension_usage?select=*&user_id=eq.${user.id}&usage_month=eq.${currentMonth}`, {
         headers: {
           'apikey': this.SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${this.SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${userAccessToken}`,
           'Content-Type': 'application/json'
         }
       });
@@ -229,13 +262,15 @@ class DirectSupabaseAuthService {
       const usageData = await usageResponse.json();
       const currentUsage = usageData?.[0]?.usage_count || 0;
       
+      console.log('🔍 Full extension_usage data:', JSON.stringify(usageData, null, 2));
+      
       console.log('📊 Background: Current usage from extension_usage:', currentUsage);
       
-      // Get subscription info - try without status filter first to see all subscriptions
+      // Get subscription info using user's access token
       const subscriptionResponse = await fetch(`${this.SUPABASE_URL}/rest/v1/subscriptions?select=*&user_id=eq.${user.id}&order=created_at.desc&limit=1`, {
         headers: {
           'apikey': this.SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${this.SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${userAccessToken}`,
           'Content-Type': 'application/json'
         }
       });
@@ -243,22 +278,31 @@ class DirectSupabaseAuthService {
       const subscriptions = await subscriptionResponse.json();
       const subscription = subscriptions?.[0];
       
-      console.log('🔍 Background: Subscription query result:', {
-        hasSubscription: !!subscription,
-        subscription: subscription,
-        allSubscriptions: subscriptions
-      });
+      console.log('🔍 Background: Subscription query result:');
+      console.log('  - Has subscription:', !!subscription);
+      console.log('  - Subscription object:', JSON.stringify(subscription, null, 2));
+      console.log('  - All subscriptions:', JSON.stringify(subscriptions, null, 2));
       
-      // Usage already calculated from extension_usage view above
-      const plan = subscription?.plan;
+      // If no subscription found in subscriptions table, check profiles table
+      let plan = subscription?.plan;
+      if (!plan && profile) {
+        console.log('ℹ️ No subscription in subscriptions table, checking profiles table...');
+        plan = profile.subscription_tier || profile.tier || profile.plan;
+        console.log('  - Profile subscription_tier:', profile.subscription_tier);
+        console.log('  - Profile tier:', profile.tier);
+        console.log('  - Profile plan:', profile.plan);
+      }
+      
+      console.log('  - Final plan field value:', plan);
       
       // Map subscription plans to monthly limits
-      // Default to 'free' tier with 5 job limit if no subscription found
-      let monthlyLimit = 5; // Default free tier limit
+      let monthlyLimit = 5; // Start with free tier as minimum
       let tier = 'free';
       
-      if (plan) {
-        switch (plan) {
+      // Only set tier if we found a subscription
+      if (subscription && plan) {
+        console.log('✅ Found subscription plan:', plan);
+        switch (plan.toLowerCase()) {
           case 'basic':
             monthlyLimit = 20;
             tier = 'basic';
@@ -276,13 +320,15 @@ class DirectSupabaseAuthService {
             tier = 'premium';
             break;
           default:
-            // Unknown plan, use free tier
+            console.warn('⚠️ Unknown plan type:', plan);
             monthlyLimit = 5;
             tier = 'free';
         }
       } else {
-        console.log('No subscription plan found for user, defaulting to free tier with 5 job limit');
+        console.log('ℹ️ No subscription found in database, using free tier');
       }
+      
+      console.log('📊 Final tier assignment:', { tier, monthlyLimit });
       
       const remainingUses = Math.max(0, monthlyLimit - currentUsage);
       

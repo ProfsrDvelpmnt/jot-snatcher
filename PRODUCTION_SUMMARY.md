@@ -1,13 +1,15 @@
-# JOT Snatcher v1.2.1 - Production Ready
+# JOT Snatcher v1.2.2 - Production Ready
 
 ## Build Status
 ✅ **Production build complete**  
-✅ **Version updated to 1.2.1**  
+✅ **Version updated to 1.2.2**  
 ✅ **All authentication issues fixed**  
+✅ **Usage tracking fixed to show accurate counts**  
+✅ **Subscription tier detection fixed**  
 ✅ **Ready for Chrome Web Store submission**
 
 ## Production Package
-📦 **File:** `SP-JOT-Snatcher-1.2.1-PRODUCTION.zip`  
+📦 **File:** `SP-JOT-Snatcher-1.2.2-PRODUCTION.zip`  
 📍 **Location:** `E:\Users\LisaWade\Desktop\JOT Snatcher\`  
 📋 **Size:** ~1.5 MB (all assets included)
 
@@ -28,6 +30,9 @@
 - Fixed iframe Supabase client conflict by preventing initialization in non-background contexts
 - Enhanced connection testing to use auth state as primary indicator
 - Improved webapp auth synchronization
+- **Fixed usage tracking to use `extension_usage` view instead of `jobs` table for accurate counts**
+- **Fixed subscription tier detection by using user access token instead of anon key for database queries**
+- **Extension now correctly reads subscription tier from database (executive, professional, basic, free)**
 
 ## Files Modified
 - `src/background/background-standalone.js` - Core fixes for authentication
