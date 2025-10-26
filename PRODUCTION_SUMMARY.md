@@ -42,7 +42,7 @@
 - `src/components/Iframe/IframeContent.tsx` - Connection status fixes
 - `src/content/content-script.ts` - Auth state message handler
 - `src/services/directSupabaseAuth.ts` - Context detection and iframe handling
-- `manifest.json` - Version bump to 1.2.1
+- `manifest.json` - Version bump to 1.2.2
 
 ## Chrome Web Store Submission
 
@@ -85,19 +85,21 @@ Users can now authenticate and connect to JOT-HUB successfully.
 
 ## Support Files Created
 - `PRODUCTION_RELEASE_NOTES.md` - Detailed technical release notes
+- `PRODUCTION_SUMMARY.md` - Complete release summary
 - `TEST_INSTRUCTIONS.md` - Testing guidelines
-- `SP-JOT-Snatcher-1.2.1-PRODUCTION.zip` - Production-ready package
+- `SP-JOT-Snatcher-1.2.2-PRODUCTION.zip` - Production-ready package
 
 ## Next Steps After Publication
-1. Monitor Chrome Web Store reviews for any issues
-2. Check analytics for authentication success rates
-3. Watch for any new edge cases from real users
-4. Consider adding authentication analytics/telemetry
+1. Submit to Chrome Web Store
+2. Monitor Chrome Web Store reviews for any issues
+3. Check analytics for authentication success rates
+4. Watch for any new edge cases from real users
+5. Consider adding authentication analytics/telemetry
 
 ## Rollback Plan
 If critical issues arise:
-1. Previous version: 1.2.0
-2. Can quickly patch and release 1.2.2
+1. Previous version: 1.2.1
+2. Can quickly patch and release 1.2.3
 3. Maintain backwards compatibility with Supabase API
 
 ---
