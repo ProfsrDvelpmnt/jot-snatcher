@@ -15,6 +15,11 @@ export default defineConfig({
           copyFileSync('manifest.json', 'dist/manifest.json');
         }
         
+        // Copy help.html
+        if (existsSync('help.html')) {
+          copyFileSync('help.html', 'dist/help.html');
+        }
+        
         // Copy icons folder
         if (existsSync('JOT Snatcher/public/icons')) {
           if (!existsSync('dist/icons')) {

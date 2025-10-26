@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JOT Snatcher - Help & Documentation</title>
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Icon styling */
+        .icon {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            vertical-align: middle;
+        }
+
+        /* Collapsible sections */
+        .collapsible-section {
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            background: white;
+            overflow: hidden;
+        }
+
+        .collapsible-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem 2rem;
+            cursor: pointer;
+            background: #f5f1ed;
+            transition: all 0.3s ease;
+        }
+
+        .collapsible-section-header:hover {
+            background: #f0ebe6;
+        }
+
+        .collapsible-section-header h2 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .collapsible-section-header p {
+            margin: 0.5rem 0 0 0;
+            font-size: 1rem;
+            color: #421237;
+        }
+
+        .collapsible-toggle {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #C99383;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .collapsible-toggle svg {
+            transition: transform 0.3s ease;
+            transform: rotate(90deg);
+        }
+
+        .collapsible-section.collapsed .collapsible-toggle svg {
+            transform: rotate(0deg);
+        }
+
+        .collapsible-content {
+            max-height: 5000px;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out, opacity 0.3s ease-out;
+            opacity: 1;
+            padding: 0 2rem 2rem 2rem;
+        }
+
+        .collapsible-section.collapsed .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            padding: 0 2rem;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #1a0716;
+            background-color: #f5f1ed;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Typography */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+        }
+
+        h3 {
+            font-size: 1.75rem;
+            font-weight: 600;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: #421237;
+            font-size: 1.1rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .btn i {
+            margin-right: 8px;
+        }
+
+        .btn-primary {
+            background: #C99383;
+            color: white;
+            box-shadow: 0 4px 15px rgba(201, 147, 131, 0.3);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #ba745f;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(201, 147, 131, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #421237;
+            border: 2px solid #6a1d58;
+        }
+
+        .btn-outline:hover {
+            background: #6a1d58;
+            color: white;
+        }
+
+        .btn-large {
+            padding: 16px 32px;
+            font-size: 1.1rem;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(250, 248, 245, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid #f5f1ed;
+            padding: 0 1rem;
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 0;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-brand .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        .nav-brand a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .logo-text {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a0716;
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin: 0;
+            padding: 0;
+            max-width: 100%;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            color: #421237;
+            font-weight: 500;
+            font-size: 1.1rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-menu a:hover {
+            color: #C99383;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 3px;
+            background: #333;
+            margin: 3px 0;
+            transition: 0.3s;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 120px 0 80px;
+            background: linear-gradient(135deg, #faf8f5 0%, #f5f1ed 100%);
+        }
+
+        .hero .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            color: #1a0716;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: #421237;
+            margin-bottom: 2rem;
+        }
+
+        .hero-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .hero-features {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+
+        .feature-item i {
+            color: #C99383;
+            font-size: 1.25rem;
+        }
+
+        /* Feature Sections */
+        .feature-section {
+            padding: 80px 0;
+        }
+
+        .feature-section .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .feature-section.reverse .container {
+            direction: rtl;
+        }
+
+        .feature-section.reverse .feature-content {
+            direction: ltr;
+        }
+
+        .feature-content h2 {
+            margin-bottom: 1.5rem;
+            color: #1a0716;
+        }
+
+        .feature-content p {
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        /* Feature Visuals */
+        .ai-interface {
+            background: #e3f2fd;
+            border-radius: 16px;
+            padding: 2rem;
+            border: 2px solid #bbdefb;
+        }
+
+        /* How It Works */
+        .how-it-works {
+            padding: 80px 0;
+            background: #f5f1ed;
+        }
+
+        .how-it-works h2 {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .works-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .works-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: #6a1d58;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin: 0 auto 1rem auto;
+        }
+
+        .step-content h3 {
+            margin-bottom: 0.5rem;
+            color: #1a0716;
+        }
+
+        .step-content p {
+            color: #421237;
+            margin-bottom: 0;
+        }
+
+        /* Testimonials */
+        .testimonials {
+            padding: 80px 0;
+            background: #f5f1ed;
+        }
+
+        /* Value Proposition */
+        .value-proposition {
+            padding: 80px 0;
+            background: #faf8f5;
+        }
+
+        .value-proposition h2,
+        .value-proposition p {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .value-proposition p {
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+            color: #421237;
+        }
+
+        .value-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .value-item {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 16px;
+            background: #f5f1ed;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .value-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(106, 29, 88, 0.1);
+            border-color: #C99383;
+        }
+
+        .value-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .value-item h3 {
+            color: #1a0716;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .value-item p {
+            color: #421237;
+            font-size: 1rem;
+            margin-bottom: 0;
+        }
+
+        .testimonials h2,
+        .testimonials p {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .rating {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .stars {
+            color: #ffd700;
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+        }
+
+        .rating-text {
+            font-weight: 500;
+            color: #1a0716;
+        }
+
+        .testimonial-banner {
+            background: #421237;
+            color: white;
+            padding: 2rem;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .testimonial-card {
+            background: #faf8f5;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .testimonial-card .stars {
+            color: #ffd700;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .testimonial-card p {
+            font-style: italic;
+            margin-bottom: 1.5rem;
+            color: #421237;
+        }
+
+        .testimonial-author strong {
+            display: block;
+            color: #1a0716;
+            margin-bottom: 0.25rem;
+        }
+
+        .testimonial-author span {
+            color: #6a1d58;
+            font-size: 0.9rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 60px 0 20px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: 1fr 3fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-brand {
+            text-align: center;
+        }
+
+        .footer-brand .logo-text {
+            color: white;
+        }
+
+        .footer-brand p {
+            color: #bdc3c7;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+
+        .footer-links {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+        }
+
+        .footer-links a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: #C99383;
+        }
+
+        .footer-column h4 {
+            color: #ecf0f1;
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-column ul li a {
+            color: #bdc3c7;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-column ul li a:hover {
+            color: #C99383;
+        }
+
+        .footer-bottom {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 2rem;
+            border-top: 1px solid #34495e;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .social-links a {
+            color: #bdc3c7;
+            font-size: 1.25rem;
+            transition: color 0.3s ease;
+        }
+
+        .social-links a:hover {
+            color: #C99383;
+        }
+
+        .copyright p {
+            color: #bdc3c7;
+            margin-bottom: 0;
+        }
+
+        /* Help page specific styles */
+        .help-hero {
+            padding: 135px 0 40px;
+            background: linear-gradient(135deg, #C99383, #d8b2a7);
+            color: #1a0716;
+            text-align: center;
+        }
+
+        .help-hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            color: #1a0716;
+        }
+
+        .help-hero p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            color: #421237;
+        }
+
+        .help-section {
+            padding: 40px 0;
+        }
+
+        .help-section h2 {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: #1a0716;
+        }
+
+        .help-section p {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: #421237;
+        }
+
+        .help-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .help-card {
+            background: #faf8f5;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .help-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(201, 147, 131, 0.15);
+            border-color: #C99383;
+        }
+
+        .help-card i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #C99383;
+        }
+
+        .help-card h3 {
+            color: #1a0716;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .help-card p {
+            color: #421237;
+            margin-bottom: 0;
+            text-align: left;
+        }
+
+        .help-card ul {
+            list-style: none;
+            text-align: left;
+            margin-top: 1rem;
+        }
+
+        .help-card li {
+            margin-bottom: 0.5rem;
+            color: #421237;
+            font-size: 0.95rem;
+        }
+
+        .help-card li i {
+            color: #C99383;
+            margin-right: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .troubleshooting-section {
+            background: #f5f1ed;
+            padding: 40px 0;
+        }
+
+        .troubleshooting-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .troubleshooting-card {
+            background: #faf8f5;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #C99383;
+        }
+
+        .troubleshooting-card h3 {
+            color: #1a0716;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .troubleshooting-card ul {
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        .troubleshooting-card li {
+            margin-bottom: 0.75rem;
+            color: #421237;
+            font-size: 0.95rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .troubleshooting-card li:before {
+            content: "•";
+            color: #C99383;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+
+        .support-section {
+            background: #f5f1ed;
+            padding: 40px 0;
+        }
+
+        .support-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .support-card {
+            background: #f5f1ed;
+            padding: 2rem;
+            border-radius: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid #e9ecef;
+        }
+
+        .support-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(201, 147, 131, 0.15);
+            border-color: #C99383;
+        }
+
+        .support-card i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #C99383;
+        }
+
+        .support-card h3 {
+            color: #1a0716;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .support-card p {
+            color: #421237;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .support-card a {
+            color: #C99383;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .support-card a {
+            color: #1a0716;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .support-card a:hover {
+            color: #C99383;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hamburger {
+                display: flex;
+            }
+            
+            .nav-menu {
+                display: none;
+            }
+            
+            .hero .container {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 2rem;
+            }
+            
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .feature-section .container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .works-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .footer-links {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            
+            .help-hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .help-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .troubleshooting-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .support-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-brand">
+                <a href="#" class="logo">
+                    <img src="chrome-extension://cigpmeolficafmjcanedlgghodlpcalb/icons/spjot-48.png" style="width: 48px; height: 48px; flex-shrink: 0; display: block;" alt="JOT" onerror="console.error('Failed to load icon:', this.src)" class="logo-icon">
+                    <span class="logo-text">JOT Snatcher</span>
+                </a>
+            </div>
+            <ul class="nav-menu">
+            </ul>
+            <div class="nav-actions">
+                <div class="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="help-hero">
+        <div class="container">
+            <h1>JOT Snatcher Help Center</h1>
+            <p>Transform your job search with one-click job capture. Collect, organize, and manage job opportunities from major job sites instantly.</p>
+            <div class="hero-actions">
+                <a href="#quick-start" class="btn btn-primary btn-large">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    Get Started
+                </a>
+                <a href="#how-it-works" class="btn btn-outline btn-large">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                    </svg>
+                    How It Works
+                </a>
+                <a href="#troubleshooting" class="btn btn-outline btn-large">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Troubleshooting
+                </a>
+                <a href="#support" class="btn btn-outline btn-large">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                    Need More Help?
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Start Section -->
+    <section id="quick-start" class="help-section">
+        <div class="container">
+            <h2>Quick Start Guide</h2>
+            <p>Get up and running with JOT Snatcher in minutes</p>
+
+            <div class="help-grid">
+                <!-- Step 1 -->
+                <div class="help-card">
+                    <div class="step-number">1</div>
+                    <h3>Pin the Extension</h3>
+                    <p>Click the extensions icon <img src="chrome-extension://__MSG_@@extension_id__/icons/spjot-16.png" style="width: 16px; height: 16px; vertical-align: middle;"> on your browser toolbar and pin the JOT Snatcher icon so it's always visible.</p>
+                    <div style="background: #f5f1ed; padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                        <svg class="icon" style="width: 2rem; height: 2rem; color: #C99383; margin-bottom: 0.5rem; display: block;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                        <p style="margin: 0; font-size: 0.9rem; color: #421237;">Always keep JOT Snatcher accessible</p>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="help-card">
+                    <div class="step-number">2</div>
+                    <h3>Login & Setup</h3>
+                    <p>Click the JOT Snatcher icon to open the popup. Sign in with your SP-JOT account to access your subscription.</p>
+                    <div style="background: #f5f1ed; padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                        <svg class="icon" style="width: 2rem; height: 2rem; color: #C99383; margin-bottom: 0.5rem; display: block;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                        <p style="margin: 0; font-size: 0.9rem; color: #421237;">Secure authentication with SP-JOT</p>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="help-card">
+                    <div class="step-number">3</div>
+                    <h3>Collect Jobs</h3>
+                    <p>Visit any supported job site, find a job posting, and click the "Collect" button to capture all job details instantly.</p>
+                    <div style="background: #f5f1ed; padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                        <svg class="icon" style="width: 2rem; height: 2rem; color: #C99383; margin-bottom: 0.5rem; display: block;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        <p style="margin: 0; font-size: 0.9rem; color: #421237;">One-click job data extraction</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How to Use Section -->
+    <section id="how-it-works" class="help-section">
+        <div class="container">
+            <h2>How to Use JOT Snatcher</h2>
+            <p>Step-by-step instructions for common tasks</p>
+
+            <div style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 800px; margin: 0 auto;">
+                <h2 style="text-align: left; margin: 0 0 1rem 0; color: #1a0716; font-size: 1.8rem;">Collecting A Job</h2>
+                
+                <!-- Collecting Job Data -->
+                <div class="help-card">
+                    <svg style="width: 3rem; height: 3rem; color: #C99383; margin: 0 auto 1rem auto; display: block;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    <h3>Collecting Job Information</h3>
+                    <ul style="text-align: left; list-style: none; padding: 0;">
+                        <li style="color: #421237; margin-bottom: 0.5rem; padding-left: 1.5rem; position: relative;">
+                            <span style="position: absolute; left: 0; color: #C99383;">•</span>
+                            Navigate to any supported job site (LinkedIn, Indeed, etc.)
+                        </li>
+                        <li style="color: #421237; margin-bottom: 0.5rem; padding-left: 1.5rem; position: relative;">
+                            <span style="position: absolute; left: 0; color: #C99383;">•</span>
+                            Find a job posting you're interested in
+                        </li>
+                        <li style="color: #421237; margin-bottom: 0.5rem; padding-left: 1.5rem; position: relative;">
+                            <span style="position: absolute; left: 0; color: #C99383;">•</span>
+                            Click the JOT Snatcher extension icon in your browser
+                        </li>
+                        <li style="color: #421237; margin-bottom: 0.5rem; padding-left: 1.5rem; position: relative;">
+                            <span style="position: absolute; left: 0; color: #C99383;">•</span>
+                            Click the "Collect" button in the popup
+                        </li>
+                        <li style="color: #421237; margin-bottom: 0.5rem; padding-left: 1.5rem; position: relative;">
+                            <span style="position: absolute; left: 0; color: #C99383;">•</span>
+                            Wait for the extraction to complete (usually 2-3 seconds)
+                        </li>
+                        <li style="color: #421237; margin-bottom: 0.5rem; padding-left: 1.5rem; position: relative;">
+                            <span style="position: absolute; left: 0; color: #C99383;">•</span>
+                            Review the collected job data in the Details tab
+                        </li>
+                    </ul>
+                </div>
+
+                <h2 style="text-align: left; margin: 2rem 0 1rem 0; color: #1a0716; font-size: 1.8rem;">Managing Your Job Data</h2>
+                
+                <!-- Managing Your Data - Editing -->
+                <div class="help-card">
+                    <svg style="width: 3rem; height: 3rem; color: #C99383; margin: 0 auto 1rem auto; display: block;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    <h3>Editing Information</h3>
+                    <ul style="text-align: left; list-style: none; padding: 0;">
+                        <li style="color: #421237; margin-bottom: 0.5rem;">
+                            <span style="color: #C99383; margin-right: 0.5rem;">✓</span>
+                            Click the edit icon (✏️) next to any field
+                        </li>
+                        <li style="color: #421237; margin-bottom: 0.5rem;">
+                            <span style="color: #C99383; margin-right: 0.5rem;">✓</span>
+                            Modify the text directly
+                        </li>
+                        <li style="color: #421237; margin-bottom: 0.5rem;">
+                            <span style="color: #C99383; margin-right: 0.5rem;">✓</span>
+                            Press Enter to save or Escape to cancel
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Managing Your Data - Exporting -->
+                <div class="help-card">
+                    <svg style="width: 3rem; height: 3rem; color: #C99383; margin: 0 auto 1rem auto; display: block;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <h3>Exporting Options</h3>
+                    <ul style="text-align: left; list-style: none; padding: 0;">
+                        <li style="color: #421237; margin-bottom: 0.5rem;">
+                            <span style="color: #C99383; margin-right: 0.5rem;">•</span>
+                            <strong>Send:</strong> Upload to SP-JOT platform
+                        </li>
+                        <li style="color: #421237; margin-bottom: 0.5rem;">
+                            <span style="color: #C99383; margin-right: 0.5rem;">•</span>
+                            <strong>Print:</strong> Generate PDF for printing
+                        </li>
+                        <li style="color: #421237; margin-bottom: 0.5rem;">
+                            <span style="color: #C99383; margin-right: 0.5rem;">•</span>
+                            <strong>Clear:</strong> Remove current job data
+                        </li>
+                    </ul>
+                </div>
+
+                <h2 style="text-align: left; margin: 2rem 0 1rem 0; color: #1a0716; font-size: 1.8rem;">Managing Your Subscription</h2>
+                
+                <!-- Subscription Management - View Usage -->
+                <div class="help-card">
+                    <svg style="width: 3rem; height: 3rem; color: #C99383; margin: 0 auto 1rem auto; display: block;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    <h3>View Usage</h3>
+                    <ul style="text-align: left; list-style: none; padding: 0;">
+                        <li style="color: #421237; margin-bottom: 0.5rem;">
+                            <span style="color: #C99383; margin-right: 0.5rem;">✓</span>
+                            Check the Status tab for current usage
+                        </li>
+                        <li style="color: #421237; margin-bottom: 0.5rem;">
+                            <span style="color: #C99383; margin-right: 0.5rem;">✓</span>
+                            View remaining jobs for the month
+                        </li>
+                        <li style="color: #421237; margin-bottom: 0.5rem;">
+                            <span style="color: #C99383; margin-right: 0.5rem;">✓</span>
+                            See your current subscription plan
+                        </li>
+                        <li style="color: #421237; margin-bottom: 0.5rem;">
+                            <span style="color: #C99383; margin-right: 0.5rem;">✓</span>
+                            Refresh data anytime with the 🔄 button
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Subscription Management - Account -->
+                <div class="help-card">
+                    <svg style="width: 3rem; height: 3rem; color: #C99383; margin: 0 auto 1rem auto; display: block;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    <h3>Account Management</h3>
+                    <ul style="text-align: left; list-style: none; padding: 0;">
+                        <li style="color: #421237; margin-bottom: 0.5rem;">
+                            <span style="color: #C99383; margin-right: 0.5rem;">✓</span>
+                            Access options page for settings
+                        </li>
+                        <li style="color: #421237; margin-bottom: 0.5rem;">
+                            <span style="color: #C99383; margin-right: 0.5rem;">✓</span>
+                            Sign out from the Sign Out tab
+                        </li>
+                        <li style="color: #421237; margin-bottom: 0.5rem;">
+                            <span style="color: #C99383; margin-right: 0.5rem;">✓</span>
+                            Manage API configurations
+                        </li>
+                        <li style="color: #421237; margin-bottom: 0.5rem;">
+                            <span style="color: #C99383; margin-right: 0.5rem;">✓</span>
+                            Update subscription preferences
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Keyboard Shortcuts -->
+    <section class="help-section">
+        <div class="container">
+            <h2>Keyboard Shortcuts</h2>
+            <p>Speed up your workflow with these shortcuts</p>
+
+            <div class="help-grid">
+                <div class="help-card">
+                    <svg style="width: 3rem; height: 3rem; color: #C99383; margin-bottom: 1rem; display: block;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <h3>Extension Shortcuts</h3>
+                    <div style="margin-top: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #e9ecef;">
+                            <span>Open JOT Snatcher</span>
+                            <kbd style="padding: 0.25rem 0.5rem; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">Ctrl+Shift+J</kbd>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #e9ecef;">
+                            <span>Open Options Page</span>
+                            <kbd style="padding: 0.25rem 0.5rem; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">Ctrl+Shift+O</kbd>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="help-card">
+                    <svg style="width: 3rem; height: 3rem; color: #C99383; margin-bottom: 1rem; display: block;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
+                    <h3>Popup Shortcuts</h3>
+                    <div style="margin-top: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #e9ecef;">
+                            <span>Collect Job Data</span>
+                            <kbd style="padding: 0.25rem 0.5rem; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">C</kbd>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #e9ecef;">
+                            <span>Send to SP-JOT</span>
+                            <kbd style="padding: 0.25rem 0.5rem; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">S</kbd>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #e9ecef;">
+                            <span>Print/Export</span>
+                            <kbd style="padding: 0.25rem 0.5rem; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">P</kbd>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #e9ecef;">
+                            <span>Clear Data</span>
+                            <kbd style="padding: 0.25rem 0.5rem; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">X</kbd>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Troubleshooting Section -->
+    <section id="troubleshooting" class="troubleshooting-section">
+        <div class="container">
+            <h2 style="text-align: center;">Troubleshooting</h2>
+            <p style="text-align: center;">Common issues and their solutions</p>
+
+            <div class="troubleshooting-grid">
+                <div class="troubleshooting-card">
+                    <h3>Extension Not Collecting Job Data</h3>
+                    <ul>
+                        <li>Make sure you're on a supported job site (LinkedIn, Indeed, etc.)</li>
+                        <li>Refresh the page and try again</li>
+                        <li>Check if you're logged into your SP-JOT account</li>
+                        <li>Verify you haven't exceeded your monthly job limit</li>
+                        <li>Try disabling and re-enabling the extension</li>
+                    </ul>
+                </div>
+
+                <div class="troubleshooting-card">
+                    <h3>Can't Sign In</h3>
+                    <ul>
+                        <li>Check your internet connection</li>
+                        <li>Verify your SP-JOT account credentials</li>
+                        <li>Clear browser cache and cookies</li>
+                        <li>Try signing in through the SP-JOT website first</li>
+                        <li>Contact support if the issue persists</li>
+                    </ul>
+                </div>
+
+                <div class="troubleshooting-card">
+                    <h3>Usage Limit Reached</h3>
+                    <ul>
+                        <li>You've reached your monthly job collection limit</li>
+                        <li>Check the Status tab to see your current usage</li>
+                        <li>Consider upgrading your subscription plan</li>
+                        <li>Your limit will reset at the beginning of next month</li>
+                        <li>Contact support for plan upgrade assistance</li>
+                    </ul>
+                </div>
+
+                <div class="troubleshooting-card">
+                    <h3>Can't Send Job Data</h3>
+                    <ul>
+                        <li>Ensure you have an active internet connection</li>
+                        <li>Check that you're logged into your SP-JOT account</li>
+                        <li>Verify your subscription is active</li>
+                        <li>Try refreshing the popup and sending again</li>
+                        <li>Check the Options page for API configuration</li>
+                    </ul>
+                </div>
+
+                <div class="troubleshooting-card">
+                    <h3>General Tips - Best Practices</h3>
+                    <ul>
+                        <li>Keep the extension updated to the latest version</li>
+                        <li>Use supported job sites for best results</li>
+                        <li>Check your usage regularly to avoid limits</li>
+                        <li>Export important jobs immediately</li>
+                    </ul>
+                </div>
+
+                <div class="troubleshooting-card">
+                    <h3>Performance Tips</h3>
+                    <ul>
+                        <li>Close unused browser tabs for better performance</li>
+                        <li>Clear browser cache periodically</li>
+                        <li>Disable other extensions if experiencing issues</li>
+                        <li>Restart browser if extension becomes unresponsive</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="help-section" style="background: #faf8f5; display: none;">
+        <div class="container">
+            <h2>Powerful Features</h2>
+            <p>Everything you need to streamline your job search</p>
+
+            <div class="help-grid">
+                <!-- Supported Sites -->
+                <div class="help-card">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <h3>Supported Job Sites</h3>
+                    <p>Works seamlessly with major job platforms:</p>
+                    <ul>
+                        <li style="color: #421237;">• LinkedIn Jobs</li>
+                        <li style="color: #421237;">• Indeed</li>
+                        <li style="color: #421237;">• ZipRecruiter</li>
+                        <li style="color: #421237;">• Monster</li>
+                        <li style="color: #421237;">• Workday</li>
+                        <li style="color: #421237;">• TheLadders</li>
+                        <li style="color: #421237;">• Greenhouse</li>
+                        <li style="color: #421237;">• Hiring Cafe</li>
+                    </ul>
+                </div>
+
+                <!-- Smart Extraction -->
+                <div class="help-card">
+                    <svg style="width: 3rem; height: 3rem; color: #C99383; margin-bottom: 1rem; display: block;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                    <h3>Smart Job Extraction</h3>
+                    <p>Automatically captures all essential job information:</p>
+                    <ul>
+                        <li style="color: #421237;">• Job title and company</li>
+                        <li style="color: #421237;">• Location and salary</li>
+                        <li style="color: #421237;">• Full job description</li>
+                        <li style="color: #421237;">• Application links</li>
+                        <li style="color: #421237;">• Posted dates</li>
+                        <li style="color: #421237;">• Job type and requirements</li>
+                    </ul>
+                </div>
+
+                <!-- Subscription Management -->
+                <div class="help-card">
+                    <svg style="width: 3rem; height: 3rem; color: #C99383; margin-bottom: 1rem; display: block;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                    <h3>Subscription Plans</h3>
+                    <p>Flexible plans to match your job search needs:</p>
+                    <ul>
+                        <li style="color: #421237;">• Free Plan - Limited monthly jobs</li>
+                        <li style="color: #421237;">• Basic Plan - Standard capacity</li>
+                        <li style="color: #421237;">• Professional Plan - Enhanced features</li>
+                        <li style="color: #421237;">• Executive Plan - Premium support</li>
+                        <li style="color: #421237;">• Enterprise Plan - Unlimited usage</li>
+                    </ul>
+                </div>
+
+                <!-- Usage Tracking -->
+                <div class="help-card">
+                    <svg style="width: 3rem; height: 3rem; color: #C99383; margin-bottom: 1rem; display: block;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    <h3>Usage Tracking</h3>
+                    <p>Monitor your monthly job collection activity:</p>
+                    <ul>
+                        <li style="color: #421237;">• Real-time usage counter</li>
+                        <li style="color: #421237;">• Monthly limit tracking</li>
+                        <li style="color: #421237;">• Remaining jobs display</li>
+                        <li style="color: #421237;">• Usage percentage indicators</li>
+                        <li style="color: #421237;">• Automatic refresh updates</li>
+                    </ul>
+                </div>
+
+                <!-- Export Options -->
+                <div class="help-card">
+                    <svg style="width: 3rem; height: 3rem; color: #C99383; margin-bottom: 1rem; display: block;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <h3>Export & Print</h3>
+                    <p>Multiple ways to use your collected job data:</p>
+                    <ul>
+                        <li style="color: #421237;">• Send to SP-JOT platform</li>
+                        <li style="color: #421237;">• Print job details</li>
+                        <li style="color: #421237;">• Export as PDF</li>
+                        <li style="color: #421237;">• Copy to clipboard</li>
+                        <li style="color: #421237;">• Edit job information</li>
+                    </ul>
+                </div>
+
+                <!-- Theme Support -->
+                <div class="help-card">
+                    <svg style="width: 3rem; height: 3rem; color: #C99383; margin-bottom: 1rem; display: block;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+                    <h3>Modern Interface</h3>
+                    <p>Beautiful, responsive design with:</p>
+                    <ul>
+                        <li style="color: #421237;">• Light and dark themes</li>
+                        <li style="color: #421237;">• Clean, intuitive layout</li>
+                        <li style="color: #421237;">• Mobile-friendly design</li>
+                        <li style="color: #421237;">• Smooth animations</li>
+                        <li style="color: #421237;">• Accessibility features</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Support Section -->
+    <section id="support" class="support-section">
+        <div class="container">
+            <h2 style="text-align: center;">Need More Help?</h2>
+            <p style="text-align: center;">We're here to help you succeed with your job search</p>
+            
+            <div class="support-grid">
+                <div class="support-card">
+                    <svg style="width: 3rem; height: 3rem; color: #C99383; margin: 0 auto 1rem auto; display: block;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    <h3><a href="mailto:support@sp-jot.com" style="color: #1a0716; text-decoration: none;">Email Support</a></h3>
+                    <p>Get personalized help from our support team</p>
+                </div>
+
+                <div class="support-card">
+                    <svg style="width: 3rem; height: 3rem; color: #C99383; margin: 0 auto 1rem auto; display: block;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                    <h3><a href="https://app.sp-jot.com/help-support" style="color: #1a0716; text-decoration: none;">Documentation</a></h3>
+                    <p>Browse our comprehensive documentation</p>
+                </div>
+
+                <div class="support-card">
+                    <svg style="width: 3rem; height: 3rem; color: #C99383; margin: 0 auto 1rem auto; display: block;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                    <h3><a href="https://www.facebook.com/savvyprojot/" style="color: #1a0716; text-decoration: none;">Community</a></h3>
+                    <p>Connect with other users and share tips</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="logo">
+                        <img src="chrome-extension://cigpmeolficafmjcanedlgghodlpcalb/icons/spjot-48.png" style="width: 48px; height: 48px; flex-shrink: 0; display: block;" alt="JOT" onerror="console.error('Failed to load icon:', this.src)" class="logo-icon">
+                        <span class="logo-text">JOT Snatcher</span>
+                    </div>
+                    <p>Transform your job search with intelligent job capture and management.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>Product</h4>
+                        <ul>
+                            <li><a href="#features">Features</a></li>
+                            <li><a href="#quick-start">Getting Started</a></li>
+                            <li><a href="#troubleshooting">Help Center</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Support</h4>
+                        <ul>
+                            <li><a href="mailto:support@sp-jot.com">Contact Support</a></li>
+                            <li><a href="https://app.sp-jot.com/help-support">Documentation</a></li>
+                            <li><a href="https://www.facebook.com/savvyprojot/">Community</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Legal</h4>
+                        <ul>
+                            <li><a href="https://sp-jot.com/privacy-policy">Privacy Policy</a></li>
+                            <li><a href="https://sp-jot.com/terms-of-service">Terms of Service</a></li>
+                            <li><a href="https://sp-jot.com/cookie-policy">Cookie Policy</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="copyright">
+                    <p>© 2025 SP-JOT. All rights reserved. JOT Snatcher v1.2.0</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        
+        // Mobile menu toggle
+        const hamburger = document.querySelector('.hamburger');
+        const navMenu = document.querySelector('.nav-menu');
+        
+        hamburger.addEventListener('click', () => {
+            navMenu.classList.toggle('active');
+        });
+        
+        // Close mobile menu when clicking on a link
+        document.querySelectorAll('.nav-menu a').forEach(link => {
+            link.addEventListener('click', () => {
+                navMenu.classList.remove('active');
+            });
+        });
+        
+        // Add scroll effect to header
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('.header');
+            if (window.scrollY > 100) {
+                header.style.background = 'rgba(255, 255, 255, 0.98)';
+            } else {
+                header.style.background = 'rgba(255, 255, 255, 0.95)';
+            }
+        });
+
+        // Initialize collapsible sections
+        function initCollapsible() {
+            // Find all relevant sections
+            const sections = document.querySelectorAll('section.help-section, section.troubleshooting-section, section.support-section');
+            
+            let sectionIndex = 0;
+            const backgrounds = ['#faf8f5', '#f5f1ed'];
+            
+            sections.forEach(section => {
+                // Skip if hero section
+                if (section.classList.contains('help-hero')) return;
+                
+                // Get the container
+                const container = section.querySelector('.container');
+                if (!container) return;
+                
+                const header = container.querySelector('h2');
+                const paragraphs = container.querySelectorAll('p');
+                const description = paragraphs.length > 0 ? paragraphs[0] : null;
+                
+                if (!header) return;
+                
+                // Store section attributes
+                const sectionId = section.id;
+                const sectionClass = section.className;
+                
+                // Create wrapper
+                const wrapper = document.createElement('div');
+                wrapper.className = 'collapsible-section collapsed';
+                // Apply alternating background
+                wrapper.style.background = backgrounds[sectionIndex % 2];
+                
+                // Preserve section attributes
+                if (sectionId) wrapper.id = sectionId;
+                if (sectionClass && sectionClass !== 'help-hero') {
+                    wrapper.className = wrapper.className + ' ' + sectionClass;
+                }
+                
+                sectionIndex++;
+                
+                // Create header
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'collapsible-section-header';
+                
+                const headerContent = document.createElement('div');
+                headerContent.appendChild(header.cloneNode(true));
+                if (description) {
+                    headerContent.appendChild(description.cloneNode(true));
+                }
+                
+                const toggle = document.createElement('div');
+                toggle.className = 'collapsible-toggle';
+                toggle.innerHTML = '<svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>';
+                
+                headerDiv.appendChild(headerContent);
+                headerDiv.appendChild(toggle);
+                wrapper.appendChild(headerDiv);
+                
+                // Create content wrapper
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'collapsible-content';
+                
+                // Clone the container content but remove h2 and first p
+                const newContainer = container.cloneNode(true);
+                const h2 = newContainer.querySelector('h2');
+                if (h2) h2.remove();
+                const firstP = newContainer.querySelector('p');
+                if (firstP && firstP === description) firstP.remove();
+                
+                contentDiv.appendChild(newContainer);
+                wrapper.appendChild(contentDiv);
+                
+                // Replace section
+                section.parentNode.replaceChild(wrapper, section);
+                
+                // Add click handler
+                headerDiv.addEventListener('click', function() {
+                    wrapper.classList.toggle('collapsed');
+                });
+            });
+        }
+        
+        // Run on DOM ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initCollapsible);
+        } else {
+            initCollapsible();
+        }
+    </script>
+</body>
+</html>
+
+
+
