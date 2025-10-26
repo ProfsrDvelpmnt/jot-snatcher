@@ -49,6 +49,14 @@ export const PopupHeader: React.FC<PopupHeaderProps> = ({ hideInIframe = false, 
           >
             ×
           </button>
+          <a
+            href={chrome.runtime.getURL('help.html')}
+            target="_blank"
+            className="w-[16px] h-[18px] rounded bg-white/20 hover:bg-white/30 text-white flex items-center justify-center text-xs font-bold transition-all duration-200 hover:scale-110"
+            title="Help & Documentation"
+          >
+            ?
+          </a>
           <select 
             value={theme} 
             onChange={(e) => toggleTheme(e.target.value as 'light' | 'dark')}

@@ -19,14 +19,24 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onResetSig
     setLoading(true);
     setError('');
 
-      const result = await supabaseAuth.signIn(email, password);
-    
-    if (result.success) {
-      console.log('✅ Login successful');
-      onResetSignOutFlag?.(); // Reset the explicit sign-out flag
-      onLoginSuccess?.();
-    } else {
-      setError(result.error || 'Login failed');
+    try {
+      // Send sign in request to background script
+      const result = await chrome.runtime.sendMessage({
+        type: 'SIGN_IN',
+        email,
+        password
+      });
+      
+      if (result && result.success) {
+        console.log('✅ Login successful');
+        onResetSignOutFlag?.(); // Reset the explicit sign-out flag
+        onLoginSuccess?.();
+      } else {
+        setError(result?.error || 'Login failed');
+      }
+    } catch (error) {
+      console.error('❌ Error during login:', error);
+      setError('Login failed. Please try again.');
     }
     
     setLoading(false);

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "JOT Snatcher",
-  "version": "1.1.0",
+  "version": "1.2.1",
   "description": "A Modern Chrome extension that Transforms Your Job Search with One-Click Job Capture",
   "permissions": [
     "storage",
@@ -57,7 +57,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["icons/*", "floating-button.js", "src/iframe/index.html", "src/iframe/iframe.js"],
+      "resources": ["icons/*", "floating-button.js", "src/iframe/index.html", "src/iframe/iframe.js", "help.html"],
       "matches": [
         "https://aeoyohqyhawxulisdvqj.supabase.co/*",
         "https://app.sp-jot.com/*",

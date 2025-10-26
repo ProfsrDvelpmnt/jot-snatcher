@@ -67,6 +67,11 @@ export const IframeContent: React.FC = () => {
         if ((!authState.requiresLogin || event.data.authState.isAuthenticated) && !hasExplicitlySignedOut) {
           console.log('📊 Iframe: Updating auth state from content script');
           setAuthState(event.data.authState);
+          
+          // Also update Supabase connection status based on auth state
+          const isConnected = event.data.authState.isAuthenticated || false;
+          console.log('📊 Iframe: Updating Supabase connection status:', isConnected);
+          setIsSupabaseConnected(isConnected);
         } else {
           console.log('📊 Iframe: Skipping auth state update from content script - user is signed out or explicitly signed out');
         }
@@ -98,6 +103,9 @@ export const IframeContent: React.FC = () => {
       if ((!authState.requiresLogin || newAuthState.isAuthenticated) && !hasExplicitlySignedOut) {
         console.log('📊 Iframe: Updating auth state from listener');
         setAuthState(newAuthState);
+        
+        // Update Supabase connection status
+        console.log('📊 Iframe: Updating Supabase connection status from listener:', newAuthState.isAuthenticated);
         setIsSupabaseConnected(newAuthState.isAuthenticated);
       } else {
         console.log('📊 Iframe: Skipping auth state update - user is signed out or explicitly signed out');

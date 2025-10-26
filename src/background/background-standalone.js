@@ -111,6 +111,7 @@ class DirectSupabaseAuthService {
           if (parsedToken.currentSession?.user) {
             console.log('✅ DirectSupabaseAuth: Found existing session for user:', parsedToken.currentSession.user.id);
             await this.loadUserData(parsedToken.currentSession.user);
+            console.log('✅ DirectSupabaseAuth: Successfully initialized with existing session');
             return;
           }
         } catch (error) {
@@ -122,6 +123,32 @@ class DirectSupabaseAuthService {
       // If no extension storage, try to check if user is logged in via webapp
       console.log('🔍 DirectSupabaseAuth: No extension session found, checking webapp localStorage...');
       await this.checkWebappAuth();
+      
+      // Set up a listener for webapp auth updates
+      console.log('🔍 DirectSupabaseAuth: Setting up listener for webapp auth updates');
+      
+      // Periodically check for webapp auth (since we can't listen to localStorage directly)
+      const checkInterval = setInterval(async () => {
+        console.log('🔄 DirectSupabaseAuth: Periodically checking webapp auth...');
+        const currentAuthState = this.getAuthState();
+        
+        // Only check if we're not already authenticated
+        if (!currentAuthState.isAuthenticated) {
+          // Trigger a CHECK_CONNECTION to see if webapp has sent auth data
+          console.log('🔄 DirectSupabaseAuth: Not authenticated, checking for webapp auth...');
+          // This will be handled by the message handler when content script checks
+        } else {
+          // Already authenticated, stop checking
+          console.log('✅ DirectSupabaseAuth: Already authenticated, stopping periodic checks');
+          clearInterval(checkInterval);
+        }
+      }, 2000); // Check every 2 seconds
+      
+      // Clear interval after 1 minute to avoid infinite checking
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        console.log('⏱️ DirectSupabaseAuth: Stopping periodic auth checks after 1 minute');
+      }, 60000);
       
     } catch (error) {
       console.error('❌ DirectSupabaseAuth: Error initializing:', error);
@@ -136,13 +163,28 @@ class DirectSupabaseAuthService {
   // Check if user is authenticated via webapp (localStorage)
   async checkWebappAuth() {
     try {
-      console.log('🔍 DirectSupabaseAuth: Checking for webapp authentication via content script...');
+      console.log('🔍 DirectSupabaseAuth: Checking for webapp authentication...');
       
-      // The content script will automatically sync webapp auth to extension storage
-      // and send AUTH_STATE_UPDATE messages, so we don't need to do anything here
-      // Just wait for the content script to detect and sync the auth data
+      // Check if we have a token in storage (might have been synced from webapp)
+      const result = await chrome.storage.local.get(['sb-aeoyohqyhawxulisdvqj-auth-token']);
+      const token = result['sb-aeoyohqyhawxulisdvqj-auth-token'];
       
-      console.log('⚠️ DirectSupabaseAuth: Waiting for content script to sync webapp auth...');
+      if (token) {
+        console.log('✅ DirectSupabaseAuth: Found token in storage, attempting to load user data...');
+        try {
+          const parsedToken = JSON.parse(token);
+          if (parsedToken.currentSession?.user) {
+            console.log('✅ DirectSupabaseAuth: Found user in token, loading user data...');
+            await this.loadUserData(parsedToken.currentSession.user);
+            console.log('✅ DirectSupabaseAuth: Successfully loaded user data from webapp auth');
+            return;
+          }
+        } catch (error) {
+          console.log('⚠️ DirectSupabaseAuth: Error loading user from token:', error);
+        }
+      }
+      
+      console.log('⚠️ DirectSupabaseAuth: No valid webapp auth found');
       this.updateAuthState({
         isAuthenticated: false,
         requiresLogin: true,
@@ -203,24 +245,35 @@ class DirectSupabaseAuthService {
       const plan = subscription?.plan;
       
       // Map subscription plans to monthly limits
-      let monthlyLimit = null; // No default - require actual subscription data
-      switch (plan) {
-        case 'basic':
-          monthlyLimit = 20;
-          break;
-        case 'professional':
-          monthlyLimit = 100;
-          break;
-        case 'executive':
-          monthlyLimit = 400;
-          break;
-        case 'premium':
-          monthlyLimit = 200;
-          break;
-        default:
-          // No subscription plan found - user needs to set up subscription
-          console.log('No subscription plan found for user');
-          return;
+      // Default to 'free' tier with 5 job limit if no subscription found
+      let monthlyLimit = 5; // Default free tier limit
+      let tier = 'free';
+      
+      if (plan) {
+        switch (plan) {
+          case 'basic':
+            monthlyLimit = 20;
+            tier = 'basic';
+            break;
+          case 'professional':
+            monthlyLimit = 100;
+            tier = 'professional';
+            break;
+          case 'executive':
+            monthlyLimit = 400;
+            tier = 'executive';
+            break;
+          case 'premium':
+            monthlyLimit = 200;
+            tier = 'premium';
+            break;
+          default:
+            // Unknown plan, use free tier
+            monthlyLimit = 5;
+            tier = 'free';
+        }
+      } else {
+        console.log('No subscription plan found for user, defaulting to free tier with 5 job limit');
       }
       
       const remainingUses = Math.max(0, monthlyLimit - currentUsage);
@@ -237,11 +290,11 @@ class DirectSupabaseAuthService {
         userFirstName: user.user_metadata?.first_name,
         userLastName: user.user_metadata?.last_name,
         subscriptionInfo: {
-          tier: plan,
+          tier: tier, // Use the tier variable, not plan
           monthlyLimit,
           remainingUses,
           currentUsage,
-          isActive: subscription?.status === 'active'
+          isActive: subscription?.status === 'active' || tier === 'free' // Free tier is always active
         },
         lastUpdated: Date.now()
       });
@@ -255,6 +308,33 @@ class DirectSupabaseAuthService {
   updateAuthState(newState) {
     this.authState = { ...this.authState, ...newState };
     console.log('📤 DirectSupabaseAuth: Auth state updated:', this.authState);
+    
+    // Broadcast the auth state update to all tabs (for content scripts and iframes)
+    this.broadcastAuthStateUpdate();
+  }
+  
+  async broadcastAuthStateUpdate() {
+    console.log('📤 DirectSupabaseAuth: Broadcasting auth state update to all tabs...');
+    
+    try {
+      // Get all tabs and send the auth state update to content scripts
+      const tabs = await chrome.tabs.query({});
+      for (const tab of tabs) {
+        if (tab.id) {
+          try {
+            await chrome.tabs.sendMessage(tab.id, {
+              type: 'AUTH_STATE_UPDATE',
+              authState: this.authState
+            });
+            console.log('✅ DirectSupabaseAuth: Auth state sent to tab', tab.id);
+          } catch (error) {
+            // Some tabs might not have content scripts, ignore those errors
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ DirectSupabaseAuth: Error broadcasting auth state:', error);
+    }
   }
 
   getAuthState() {
@@ -322,17 +402,26 @@ class DirectSupabaseAuthService {
 
   async testConnection() {
     try {
-      // Test basic connection by checking if we have a valid session
+      // If user is authenticated, they're connected
+      if (this.authState.isAuthenticated && this.authState.userId) {
+        console.log('✅ DirectSupabaseAuth: Connection test passed - user is authenticated');
+        return true;
+      }
+      
+      // Otherwise, check if we have a valid session token
       const result = await chrome.storage.local.get(['sb-aeoyohqyhawxulisdvqj-auth-token']);
       const token = result['sb-aeoyohqyhawxulisdvqj-auth-token'];
       
       if (!token) {
+        console.log('⚠️ DirectSupabaseAuth: No token found for connection test');
         return false;
       }
       
       try {
         const parsedToken = JSON.parse(token);
-        if (parsedToken.currentSession?.user) {
+        if (parsedToken.currentSession?.user && parsedToken.currentSession?.access_token) {
+          console.log('✅ DirectSupabaseAuth: Token found, testing connection...');
+          
           // Test a simple query to verify the session is still valid
           const testResponse = await fetch(`${this.SUPABASE_URL}/rest/v1/profiles?select=id&id=eq.${parsedToken.currentSession.user.id}&limit=1`, {
             headers: {
@@ -342,15 +431,139 @@ class DirectSupabaseAuthService {
             }
           });
           
-          return testResponse.ok;
+          const isConnected = testResponse.ok;
+          console.log(`✅ DirectSupabaseAuth: Connection test result: ${isConnected}`);
+          return isConnected;
         }
       } catch (error) {
+        console.error('❌ DirectSupabaseAuth: Connection test error:', error);
         return false;
       }
       
       return false;
     } catch (error) {
+      console.error('❌ DirectSupabaseAuth: Connection test error:', error);
       return false;
+    }
+  }
+
+  async signIn(email, password) {
+    try {
+      console.log('🔐 DirectSupabaseAuth: Attempting sign in for:', email);
+      
+      // Call Supabase Auth API to sign in
+      const response = await fetch(`${this.SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        method: 'POST',
+        headers: {
+          'apikey': this.SUPABASE_ANON_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email,
+          password
+        })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('❌ DirectSupabaseAuth: Sign in failed:', error);
+        
+        let errorMessage = error.error_description || error.message || 'Login failed';
+        if (errorMessage.includes('Invalid login credentials')) {
+          errorMessage = 'Invalid email or password. Please check your credentials.';
+        } else if (errorMessage.includes('Email not confirmed')) {
+          errorMessage = 'Please check your email and confirm your account.';
+        } else if (errorMessage.includes('Too many requests')) {
+          errorMessage = 'Too many login attempts. Please try again later.';
+        }
+        
+        return {
+          success: false,
+          error: errorMessage
+        };
+      }
+      
+      const data = await response.json();
+      
+      if (data.access_token && data.user) {
+        console.log('✅ DirectSupabaseAuth: Sign in successful for:', data.user.id);
+        
+        // Store the session in Chrome storage
+        const sessionData = {
+          currentSession: {
+            access_token: data.access_token,
+            refresh_token: data.refresh_token,
+            expires_at: data.expires_in ? Date.now() + (data.expires_in * 1000) : null,
+            user: data.user
+          }
+        };
+        
+        await chrome.storage.local.set({ 'sb-aeoyohqyhawxulisdvqj-auth-token': JSON.stringify(sessionData) });
+        console.log('✅ DirectSupabaseAuth: Session stored in Chrome storage');
+        
+        // Load user data
+        await this.loadUserData(data.user);
+        
+        return { success: true };
+      }
+      
+      return { success: false, error: 'No user data returned' };
+    } catch (error) {
+      console.error('❌ DirectSupabaseAuth: Sign in error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  async signOut() {
+    try {
+      console.log('👋 DirectSupabaseAuth: Signing out...');
+      
+      // Clear the session from Chrome storage
+      await chrome.storage.local.remove(['sb-aeoyohqyhawxulisdvqj-auth-token']);
+      console.log('✅ DirectSupabaseAuth: Cleared session from Chrome storage');
+      
+      // Update auth state
+      this.updateAuthState({
+        isAuthenticated: false,
+        requiresLogin: true,
+        userId: null,
+        userName: null,
+        userEmail: null,
+        subscriptionInfo: null,
+        lastUpdated: Date.now()
+      });
+      
+      console.log('✅ DirectSupabaseAuth: Sign out successful');
+      return { success: true };
+    } catch (error) {
+      console.error('❌ DirectSupabaseAuth: Sign out error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  async refreshUserData() {
+    console.log('🔄 DirectSupabaseAuth: Refreshing user data...');
+    const result = await chrome.storage.local.get(['sb-aeoyohqyhawxulisdvqj-auth-token']);
+    const token = result['sb-aeoyohqyhawxulisdvqj-auth-token'];
+    
+    if (!token) {
+      console.log('⚠️ DirectSupabaseAuth: No session found for refresh');
+      return;
+    }
+    
+    try {
+      const parsedToken = JSON.parse(token);
+      if (parsedToken.currentSession?.user) {
+        await this.loadUserData(parsedToken.currentSession.user);
+      }
+    } catch (error) {
+      console.error('❌ DirectSupabaseAuth: Error refreshing user data:', error);
     }
   }
 }
@@ -397,15 +610,104 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       })();
       return true;
 
+    case 'SIGN_IN':
+      // Handle sign in request
+      console.log('🔐 Background: Sign in request received');
+      
+      (async () => {
+        try {
+          if (!message.email || !message.password) {
+            sendResponse({
+              success: false,
+              error: 'Email and password are required'
+            });
+            return;
+          }
+          
+          const result = await supabaseAuth.signIn(message.email, message.password);
+          console.log('🔐 Background: Sign in result:', result);
+          
+          // If sign in was successful, broadcast the updated auth state immediately
+          if (result && result.success) {
+            console.log('🔐 Background: Sign in successful, broadcasting auth state update...');
+            const updatedAuthState = supabaseAuth.getAuthState();
+            console.log('🔐 Background: Updated auth state:', updatedAuthState);
+            
+            // Trigger broadcast
+            await supabaseAuth.broadcastAuthStateUpdate();
+          }
+          
+          sendResponse(result);
+        } catch (error) {
+          console.error('❌ Background: Error during sign in:', error);
+          sendResponse({
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+        }
+      })();
+      return true;
+
+    case 'SIGN_OUT':
+      // Handle sign out request
+      console.log('👋 Background: Sign out request received');
+      
+      (async () => {
+        try {
+          const result = await supabaseAuth.signOut();
+          console.log('👋 Background: Sign out result:', result);
+          
+          sendResponse(result);
+        } catch (error) {
+          console.error('❌ Background: Error during sign out:', error);
+          sendResponse({
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+        }
+      })();
+      return true;
+
     case 'CHECK_CONNECTION':
       // Check connection using direct Supabase authentication
       (async () => {
         try {
+          // First, check if we should sync webapp auth
+          const webappConnected = await checkWebappAuthentication();
+          console.log('🔍 Background: Webapp connected:', webappConnected);
+          
+          // If webapp is connected but extension isn't, try to trigger webapp auth sync
+          if (webappConnected) {
+            console.log('🔍 Background: Webapp connected but extension not authenticated, checking for webapp session...');
+            
+            // Query webapp tabs to get auth data
+            const tabs = await chrome.tabs.query({ url: 'https://app.sp-jot.com/*' });
+            if (tabs && tabs.length > 0) {
+              console.log('🔍 Background: Found webapp tab, requesting auth data sync...');
+              try {
+                const response = await chrome.tabs.sendMessage(tabs[0].id, { type: 'SYNC_AUTH_TO_EXTENSION' });
+                if (response && response.authData) {
+                  console.log('✅ Background: Received auth data from webapp');
+                  // Store it
+                  await chrome.storage.local.set({
+                    'sb-aeoyohqyhawxulisdvqj-auth-token': JSON.stringify({ currentSession: response.authData })
+                  });
+                  // Reload user data
+                  await supabaseAuth.init();
+                }
+              } catch (error) {
+                console.log('⚠️ Background: Could not sync auth from webapp tab:', error);
+              }
+            }
+          }
+          
           // Get auth state directly from Supabase
           const authState = supabaseAuth.getAuthState();
+          console.log('📊 Background: Current auth state:', authState);
           
           // Test Supabase connection
           const isConnected = await supabaseAuth.testConnection();
+          console.log('🔍 Background: Supabase connection test:', isConnected);
           
           // Get real usage data from database
           let usageData = null;
@@ -424,9 +726,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
               };
             }
           }
-
-          // Determine webapp connectivity based on actual webapp authentication
-          const webappConnected = await checkWebappAuthentication();
 
           const response = {
             success: true,
@@ -968,6 +1267,51 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       
       sendResponse({ success: true });
       break;
+
+    case 'WEBAPP_AUTH_RECEIVED':
+    case 'SYNC_WEBAPP_AUTH':
+      console.log('🔄 Background: Received webapp auth data:', message.authData);
+      
+      (async () => {
+        try {
+          // Store the webapp auth data
+          if (message.authData && message.authData.session) {
+            const sessionData = {
+              currentSession: message.authData.session
+            };
+            
+            await chrome.storage.local.set({
+              'sb-aeoyohqyhawxulisdvqj-auth-token': JSON.stringify(sessionData)
+            });
+            console.log('✅ Background: Webapp auth token stored');
+            
+            // Now try to load user data from the stored session
+            const result = await chrome.storage.local.get(['sb-aeoyohqyhawxulisdvqj-auth-token']);
+            const token = result['sb-aeoyohqyhawxulisdvqj-auth-token'];
+            
+            if (token) {
+              try {
+                const parsedToken = JSON.parse(token);
+                if (parsedToken.currentSession?.user) {
+                  console.log('✅ Background: Loading user data from webapp auth');
+                  await supabaseAuth.loadUserData(parsedToken.currentSession.user);
+                }
+              } catch (error) {
+                console.error('❌ Background: Error loading user data from webapp auth:', error);
+              }
+            }
+            
+            sendResponse({ success: true });
+          } else {
+            console.log('⚠️ Background: No auth data in message');
+            sendResponse({ success: false, error: 'No auth data provided' });
+          }
+        } catch (error) {
+          console.error('❌ Background: Error handling webapp auth:', error);
+          sendResponse({ success: false, error: error.message });
+        }
+      })();
+      return true;
 
     case 'EXTRACT_JOB_DATA':
       (async () => {

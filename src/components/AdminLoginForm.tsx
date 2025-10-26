@@ -32,14 +32,19 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
       }
 
       // If admin credentials are valid, proceed with Supabase login
-      const result = await supabaseAuth.signIn(email, password);
+      // Send sign in request to background script
+      const result = await chrome.runtime.sendMessage({
+        type: 'SIGN_IN',
+        email,
+        password
+      });
       
-      if (result.success) {
+      if (result && result.success) {
         console.log('✅ Admin login successful');
         onResetSignOutFlag?.();
         onLoginSuccess?.();
       } else {
-        setError(result.error || 'Admin login failed');
+        setError(result?.error || 'Admin login failed');
       }
     } catch (err) {
       console.error('❌ Admin login error:', err);
@@ -51,9 +56,15 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
 
   const handleSignOut = async () => {
     setLoading(true);
-    const result = await supabaseAuth.signOut();
-    if (result.success) {
-      console.log('✅ Admin sign out successful');
+    try {
+      const result = await chrome.runtime.sendMessage({
+        type: 'SIGN_OUT'
+      });
+      if (result && result.success) {
+        console.log('✅ Admin sign out successful');
+      }
+    } catch (error) {
+      console.error('❌ Error during sign out:', error);
     }
     setLoading(false);
   };

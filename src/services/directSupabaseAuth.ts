@@ -105,6 +105,24 @@ export class DirectSupabaseAuthService {
   private async initializeAuth() {
     console.log('🔧 DirectSupabaseAuth: Initializing direct Supabase authentication...');
     
+    // Skip Supabase client initialization in non-background contexts (iframe, popup, content script)
+    // These contexts should use message passing to communicate with the background script
+    // Check if we're in a service worker context (background script)
+    const isInServiceWorker = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage !== undefined;
+    const isInMainWorld = typeof window !== 'undefined' && window.document !== undefined;
+    
+    // Only initialize Supabase client in the background script (service worker)
+    if (isInMainWorld) {
+      console.log('🔧 DirectSupabaseAuth: Not in background context, skipping Supabase client initialization');
+      console.log('🔧 DirectSupabaseAuth: Will use message passing to communicate with background script');
+      this.updateAuthState({
+        isAuthenticated: false,
+        requiresLogin: true,
+        lastUpdated: Date.now()
+      });
+      return;
+    }
+    
     try {
       // First validate the API key
       if (!isValidApiKey(SUPABASE_ANON_KEY)) {
@@ -489,37 +507,71 @@ export class DirectSupabaseAuthService {
     try {
       console.log('🔐 DirectSupabaseAuth: Attempting sign in for:', email);
       
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      // Always try to use the Supabase client directly first (for development)
+      // In production builds with background-standalone.js, this will send to background script
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
 
-      if (error) {
-        console.error('❌ DirectSupabaseAuth: Sign in failed:', error);
-        
-        // Provide more specific error messages
-        let errorMessage = error.message;
-        if (error.message.includes('Invalid login credentials')) {
-          errorMessage = 'Invalid email or password. Please check your credentials.';
-        } else if (error.message.includes('Email not confirmed')) {
-          errorMessage = 'Please check your email and confirm your account.';
-        } else if (error.message.includes('Too many requests')) {
-          errorMessage = 'Too many login attempts. Please try again later.';
+        if (error) {
+          console.error('❌ DirectSupabaseAuth: Sign in failed:', error);
+          
+          // Provide more specific error messages
+          let errorMessage = error.message;
+          if (error.message.includes('Invalid login credentials')) {
+            errorMessage = 'Invalid email or password. Please check your credentials.';
+          } else if (error.message.includes('Email not confirmed')) {
+            errorMessage = 'Please check your email and confirm your account.';
+          } else if (error.message.includes('Too many requests')) {
+            errorMessage = 'Too many login attempts. Please try again later.';
+          }
+          
+          return { 
+            success: false, 
+            error: errorMessage 
+          };
         }
-        
-        return { 
-          success: false, 
-          error: errorMessage 
-        };
-      }
 
-      if (data.user) {
-        console.log('✅ DirectSupabaseAuth: Sign in successful for:', data.user.id);
-        await this.loadUserData(data.user);
-        return { success: true };
-      }
+        if (data.user) {
+          console.log('✅ DirectSupabaseAuth: Sign in successful for:', data.user.id);
+          await this.loadUserData(data.user);
+          return { success: true };
+        }
 
-      return { success: false, error: 'No user data returned' };
+        return { success: false, error: 'No user data returned' };
+      } catch (supabaseError) {
+        // If Supabase client is not available (production build), fall back to background script
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+          console.log('🔐 DirectSupabaseAuth: Supabase client unavailable, sending sign in request to background script');
+          
+          const result = await chrome.runtime.sendMessage({
+            type: 'SIGN_IN',
+            email,
+            password
+          });
+          
+          if (result && result.success) {
+            console.log('✅ DirectSupabaseAuth: Sign in successful via background script');
+            // Refresh auth state
+            const authState = this.getAuthState();
+            return { success: true };
+          } else {
+            console.error('❌ DirectSupabaseAuth: Sign in failed via background script:', result?.error);
+            return {
+              success: false,
+              error: result?.error || 'Login failed'
+            };
+          }
+        } else {
+          // No fallback available
+          return {
+            success: false,
+            error: 'Login failed: authentication service unavailable'
+          };
+        }
+      }
     } catch (error) {
       console.error('❌ DirectSupabaseAuth: Sign in error:', error);
       return { 

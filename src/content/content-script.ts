@@ -1785,6 +1785,46 @@ function injectLoginPrompt() {
 // Listen for messages from background script
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   switch (message.type) {
+    case 'AUTH_STATE_UPDATE':
+      // Handle auth state update from background script
+      console.log('📨 Content script: Received AUTH_STATE_UPDATE from background:', message.authState);
+      
+      if (message.authState && message.authState.isAuthenticated) {
+        console.log('✅ Content script: User authenticated, updating iframe header...');
+        // Update the iframe header
+        (async () => {
+          await updateIframeHeader(message.authState.userName, message.authState.userEmail, true);
+          
+          // Send auth state to iframe
+          const iframe = document.getElementById('jot-snatcher-iframe-panel') as HTMLIFrameElement;
+          if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.postMessage({ 
+              type: 'AUTH_STATE_UPDATE', 
+              authState: message.authState
+            }, '*');
+          }
+        })();
+      } else {
+        console.log('⚠️ Content script: User not authenticated');
+        // Clear the iframe header
+        updateIframeHeader(null, null, false);
+        
+        // Send auth state to iframe
+        const iframe = document.getElementById('jot-snatcher-iframe-panel') as HTMLIFrameElement;
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage({ 
+            type: 'AUTH_STATE_UPDATE', 
+            authState: {
+              isAuthenticated: false,
+              requiresLogin: true
+            }
+          }, '*');
+        }
+      }
+      
+      sendResponse({ success: true });
+      break;
+    
     case 'INJECT_FLOATING_BUTTON':
       initializeFloatingButton();
       sendResponse({ success: true });
