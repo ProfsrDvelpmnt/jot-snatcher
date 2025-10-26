@@ -216,9 +216,9 @@ class DirectSupabaseAuthService {
       const profiles = await profileResponse.json();
       const profile = profiles?.[0];
       
-      // Get user's jobs count for current month
+      // Get user's usage for current month from extension_usage view
       const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-      const jobsResponse = await fetch(`${this.SUPABASE_URL}/rest/v1/jobs?select=id&user_id=eq.${user.id}&created_at=gte.${currentMonth}-01`, {
+      const usageResponse = await fetch(`${this.SUPABASE_URL}/rest/v1/extension_usage?select=usage_count&user_id=eq.${user.id}&usage_month=eq.${currentMonth}`, {
         headers: {
           'apikey': this.SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${this.SUPABASE_ANON_KEY}`,
@@ -226,7 +226,10 @@ class DirectSupabaseAuthService {
         }
       });
       
-      const jobs = await jobsResponse.json();
+      const usageData = await usageResponse.json();
+      const currentUsage = usageData?.[0]?.usage_count || 0;
+      
+      console.log('📊 Background: Current usage from extension_usage:', currentUsage);
       
       // Get subscription info
       const subscriptionResponse = await fetch(`${this.SUPABASE_URL}/rest/v1/subscriptions?select=*&user_id=eq.${user.id}&status=eq.active`, {
@@ -240,8 +243,7 @@ class DirectSupabaseAuthService {
       const subscriptions = await subscriptionResponse.json();
       const subscription = subscriptions?.[0];
       
-      // Calculate usage stats
-      const currentUsage = jobs?.length || 0;
+      // Usage already calculated from extension_usage view above
       const plan = subscription?.plan;
       
       // Map subscription plans to monthly limits
