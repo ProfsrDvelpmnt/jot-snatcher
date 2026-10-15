@@ -1,14 +1,14 @@
 {
   "name": "jot-snatcher",
-  "version": "1.1.0",
+  "version": "1.3.0",
   "description": "Modern Chrome extension for job collection with Tailwind CSS and TypeScript",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "dev:api": "node api-server.js",
     "dev:full": "concurrently \"npm run dev:api\" \"npm run dev\"",
-    "build": "tsc && vite build",
-    "build:production": "tsc && vite build --config vite.config.production.ts",
+    "build": "tsc --noEmit && vite build && vite build --config vite.sw.config.ts",
+    "build:production": "tsc --noEmit && vite build --config vite.config.production.ts && vite build --config vite.sw.config.ts",
     "preview": "vite preview",
     "type-check": "tsc --noEmit"
   },

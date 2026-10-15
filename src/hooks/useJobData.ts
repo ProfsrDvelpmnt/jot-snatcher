@@ -12,6 +12,7 @@ export const useJobData = () => {
   const [usageData, setUsageData] = useState<UsageData | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [captureNotice, setCaptureNotice] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -48,90 +49,17 @@ export const useJobData = () => {
       try {
         console.log('🔍 Checking authentication status using DirectSupabaseAuth...');
         
-        // Use direct Supabase auth to check authentication status
-        const authState = supabaseAuth.getAuthState();
-        console.log('🔍 DirectSupabaseAuth state:', authState);
-        
-        setIsConnected(authState.isAuthenticated);
-        setIsAuthenticated(authState.isAuthenticated);
-        setRequiresLogin(authState.requiresLogin);
-        setUserName(authState.userName || null);
-        setUserId(authState.userId || null);
-        
-        if (authState.isAuthenticated) {
-          console.log('✅ User is authenticated, proceeding with data collection...');
-          
-          // Try to get usage data through the background script
-          try {
-            console.log('🔍 Trying to get usage data from background script...');
-            const usageResult = await chrome.runtime.sendMessage({ type: 'GET_USAGE_DATA' });
-            console.log('📊 Usage data result:', usageResult);
-            
-            if (usageResult.success && usageResult.data) {
-              setUsageData(usageResult.data);
-              console.log('✅ Got usage data from API:', usageResult.data);
-            } else if (usageResult.error && usageResult.error.includes('not authenticated')) {
-              console.log('⚠️ User not authenticated for API calls, using webapp data only');
-            } else {
-              console.log('⚠️ Could not get usage data from background script, trying direct Supabase auth data...');
-              
-              // Try to extract usage data from direct Supabase auth state
-              const extractUsageData = () => {
-                const supabaseUserData = authState.subscriptionInfo;
-                console.log('🔍 Checking Supabase usage data:', supabaseUserData);
-                
-                // Check if we have real subscription data (not default/initial data)
-                const hasRealData = supabaseUserData && 
-                                  supabaseUserData.tier && 
-                                  supabaseUserData.monthlyLimit;
-                
-                if (hasRealData) {
-                  const usageData = {
-                    currentMonth: supabaseUserData.currentUsage || 0,
-                    monthlyLimit: supabaseUserData.monthlyLimit,
-                    remainingUses: supabaseUserData.remainingUses || (supabaseUserData.monthlyLimit - (supabaseUserData.currentUsage || 0)),
-                    userId: authState.userId || 'supabase-user',
-                    tier: supabaseUserData.tier,
-                    lastUpdated: new Date().toISOString()
-                  };
-                  setUsageData(usageData);
-                  console.log('✅ Got real usage data from Supabase:', usageData);
-                  return true;
-                } else if (supabaseUserData) {
-                  console.log('⚠️ Supabase data found but appears to be default/initial data:', {
-                    tier: supabaseUserData.tier,
-                    monthlyLimit: supabaseUserData.monthlyLimit,
-                    isDefault: supabaseUserData.tier === 'unknown' || supabaseUserData.monthlyLimit === 0
-                  });
-                  return false;
-                } else {
-                  console.log('⚠️ No Supabase usage data available');
-                  return false;
-                }
-              };
-
-              // Try immediately
-              if (!extractUsageData()) {
-                // If not found, wait a bit and try again (webapp might still be loading)
-                console.log('🔍 Usage data not found immediately, retrying in 2 seconds...');
-                setTimeout(() => {
-                  if (!extractUsageData()) {
-                    console.log('🔍 Still no real data, retrying in 3 more seconds...');
-                    setTimeout(() => {
-                      if (!extractUsageData()) {
-                        console.log('⚠️ No real usage data available from webapp after multiple retries');
-                      }
-                    }, 3000);
-                  }
-                }, 2000);
-              }
-            }
-          } catch (error) {
-            console.error('❌ Error getting usage data:', error);
-          }
-        } else {
-          console.log('⚠️ User is not authenticated, skipping data collection');
-        }
+        const response = await chrome.runtime.sendMessage({ type: 'CHECK_CONNECTION' });
+        const data = response?.success ? response.data : null;
+        const signedIn = !!data?.isAuthenticated;
+        setIsConnected(signedIn);
+        setIsAuthenticated(signedIn);
+        setRequiresLogin(!signedIn);
+        setUserName(data?.userName || null);
+        setUserId(data?.userId || null);
+        if (data?.usageData) setUsageData(data.usageData);
+        else setUsageData(null);
+        if (data?.sessionExpired) setSuccessMessage('Your session expired. Sign in again.');
       } catch (error) {
         console.error('❌ Error checking authentication status:', error);
         setIsConnected(false);
@@ -188,11 +116,6 @@ export const useJobData = () => {
   }, [isAuthenticated, userId]);
 
   const collectJobData = async () => {
-    if (!isAuthenticated) {
-      console.log('⚠️ Cannot collect job data: user not authenticated');
-      return;
-    }
-
     setIsLoading(true);
     try {
       console.log('🔍 Collecting job data...');
@@ -200,6 +123,7 @@ export const useJobData = () => {
       
       if (result.success && result.data) {
         setJobData(result.data);
+        setCaptureNotice(result.generic ? "This site isn't fully supported yet. Please review the fields." : null);
         console.log('✅ Job data collected:', result.data);
       } else {
         console.log('❌ Failed to collect job data:', result.error);
@@ -243,13 +167,13 @@ export const useJobData = () => {
   };
 
   const sendJobData = async () => {
-    if (!isAuthenticated) {
-      console.log('⚠️ Cannot send job data: user not authenticated');
+    if (!jobData) {
+      console.log('⚠️ No job data to send');
       return;
     }
 
-    if (!jobData) {
-      console.log('⚠️ No job data to send');
+    if (!isAuthenticated) {
+      setSuccessMessage('Your session expired. Sign in again.');
       return;
     }
 
@@ -278,7 +202,10 @@ export const useJobData = () => {
         console.log('🎉 Job submitted successfully! Form cleared and usage updated.');
       } else {
         console.log('❌ Failed to send job data:', result.error);
-        setSuccessMessage(`❌ Failed to submit job: ${result.error}`);
+        const message = result.sessionExpired
+          ? 'Your session expired. Sign in again.'
+          : `❌ Failed to submit job: ${result.error}`;
+        setSuccessMessage(message);
         // Clear error message after 8 seconds (longer for popup)
         setTimeout(() => setSuccessMessage(null), 8000);
       }
@@ -334,6 +261,7 @@ export const useJobData = () => {
     userName,
     userId,
     successMessage,
+    captureNotice,
     setSuccessMessage,
     collectJobData,
     exportJobData,

@@ -13,6 +13,7 @@ export interface JobData {
   location: string;
   type: string; // 'Full Time', 'Part Time', 'Contract', 'Seasonal'
   environment: string; // 'Remote', 'Hybrid', 'In-Person'
+  clearance?: string | null; // 'Unclassified', 'Classified', 'Secret', 'Top Secret', 'TS/SCI'
   stage: string; // 'Saved', 'Applying', 'Applied', 'Contacted', 'Interviewing', 'Offer'
   source: string; // 'indeed', 'linkedin', 'glassdoor', etc.
   job_site: string; // 'Indeed', 'LinkedIn', 'Glassdoor', etc.

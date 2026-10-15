@@ -36,6 +36,7 @@ export const JOB_FIELDS = [
   { key: 'location', label: 'Location' },
   { key: 'type', label: 'Job Type' },
   { key: 'environment', label: 'Environment' },
+  { key: 'clearance', label: 'Clearance' },
   { key: 'stage', label: 'Stage' },
   { key: 'job_site', label: 'Job Site' },
   { key: 'date_saved', label: 'Date Saved' },
@@ -45,6 +46,10 @@ export const JOB_FIELDS = [
   { key: 'ageOfPosting', label: 'Age of Posting' },
   { key: 'numApplicants', label: '# of Applicants' },
 ] as const;
+
+export const ENVIRONMENT_OPTIONS = ['Remote', 'Hybrid', 'In-Person'] as const;
+
+export const CLEARANCE_OPTIONS = ['Unclassified', 'Classified', 'Secret', 'Top Secret', 'TS/SCI'] as const;
 
 export const THEME_OPTIONS = [
   { value: 'light', label: 'Light Theme' },

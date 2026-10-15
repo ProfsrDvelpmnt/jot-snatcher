@@ -138,6 +138,8 @@ export const FloatingContent: React.FC<FloatingContentProps> = ({ onMinimize }) 
         <StatusBar
           isConnected={isConnected}
           statusText={isConnected ? "Connected to SP-JOT" : "Not Connected"}
+          isSupabaseConnected={isAuthenticated}
+          supabaseStatusText={isAuthenticated ? "Supabase Connected" : "Supabase Disconnected"}
         />
       </div>
 

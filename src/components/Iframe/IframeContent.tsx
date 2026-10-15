@@ -161,6 +161,7 @@ export const IframeContent: React.FC = () => {
     userName,
     userId,
     isAuthenticated,
+    captureNotice,
     successMessage,
     setSuccessMessage,
     collectJobData,
@@ -234,6 +235,7 @@ export const IframeContent: React.FC = () => {
         return (
           <JobDetails
             jobData={jobData}
+            captureNotice={captureNotice}
             onCollect={collectJobData}
             onExport={exportJobData}
             onSend={sendJobData}
@@ -274,10 +276,13 @@ export const IframeContent: React.FC = () => {
       {/* Header is now handled by content script iframe container */}
       
       {/* Show login form if not authenticated */}
-      {authState.requiresLogin ? (
-        <DraggableLoginForm onResetSignOutFlag={() => setHasExplicitlySignedOut(false)} />
-      ) : (
+      {isAuthenticated || jobData ? (
         <>
+            {!isAuthenticated && (
+              <p className="mx-4 mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                Your session expired. Sign in again.
+              </p>
+            )}
             <TabContainer
               activeTab={activeTab}
               onTabChange={handleTabChange}
@@ -285,9 +290,9 @@ export const IframeContent: React.FC = () => {
             />
           
           <StatusRow>
-            <ConnectionStatus type="sp-jot" connected={isWebappConnected} />
-            <ConnectionStatus type="supabase" connected={isSupabaseConnected} />
-            <UsageStatus usageData={usageData} onRefresh={refreshUsageData} />
+            <ConnectionStatus type="sp-jot" connected={isAuthenticated} />
+            <ConnectionStatus type="supabase" connected={isAuthenticated} />
+            <UsageStatus usageData={isAuthenticated ? usageData : null} onRefresh={refreshUsageData} />
           </StatusRow>
           
           
@@ -295,6 +300,8 @@ export const IframeContent: React.FC = () => {
             {renderTabContent()}
           </div>
         </>
+      ) : (
+        <DraggableLoginForm onResetSignOutFlag={() => setHasExplicitlySignedOut(false)} />
       )}
 
     </div>

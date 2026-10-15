@@ -87,8 +87,10 @@ export class PDFExporter {
   // Generate beautiful HTML for Page 1 summary
   private static generateJobSummaryHTML(jobData: JobData): string {
     const formatDate = (dateString: string | null) => {
-      if (!dateString) return 'Not specified';
-      return new Date(dateString).toLocaleDateString('en-US', {
+      if (!dateString) return 'Unknown';
+      const parsed = new Date(dateString);
+      if (Number.isNaN(parsed.getTime())) return 'Unknown';
+      return parsed.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
@@ -146,6 +148,11 @@ export class PDFExporter {
             <div>
               <h3 style="color: #374151; font-size: 16px; margin: 0 0 8px 0; font-weight: bold;">Work Environment</h3>
               <p style="color: #1f2937; font-size: 14px; margin: 0; word-wrap: break-word;">${jobData.environment || 'Not specified'}</p>
+            </div>
+
+            <div>
+              <h3 style="color: #374151; font-size: 16px; margin: 0 0 8px 0; font-weight: bold;">Clearance</h3>
+              <p style="color: #1f2937; font-size: 14px; margin: 0; word-wrap: break-word;">${jobData.clearance || 'Not specified'}</p>
             </div>
           </div>
         </div>
@@ -236,20 +243,27 @@ export class PDFExporter {
 
     // Strip HTML tags and decode HTML entities from description
     const cleanDescription = this.stripHtml(description);
+    const blocks = cleanDescription.split(/\n/);
+    let previousBlank = false;
 
-    // Split description into lines that fit within content width
-    const lines = pdf.splitTextToSize(cleanDescription, contentWidth);
-    
-    for (const line of lines) {
-      // Check if we need a new page
-      if (currentY + lineHeight > marginMM + contentHeight - 20) {
-        pdf.addPage();
-        currentY = marginMM;
-        this.addPageFooter(pdf, marginMM, contentWidth, contentHeight);
+    for (const rawLine of blocks) {
+      const paragraph = rawLine.trim();
+      if (!paragraph) {
+        if (!previousBlank) currentY += lineHeight * 0.75;
+        previousBlank = true;
+        continue;
       }
-      
-      pdf.text(line, marginMM, currentY);
-      currentY += lineHeight;
+      previousBlank = false;
+      const lines = pdf.splitTextToSize(paragraph, contentWidth);
+      for (const line of lines) {
+        if (currentY + lineHeight > marginMM + contentHeight - 20) {
+          pdf.addPage();
+          currentY = marginMM;
+          this.addPageFooter(pdf, marginMM, contentWidth, contentHeight);
+        }
+        pdf.text(line, marginMM, currentY);
+        currentY += lineHeight;
+      }
     }
 
     // Add footer to last page
@@ -273,19 +287,16 @@ export class PDFExporter {
 
   // Strip HTML tags and decode HTML entities
   private static stripHtml(html: string): string {
-    // Create a temporary div element to parse HTML
+    if (!/<[a-z][\s\S]*>/i.test(html)) {
+      return html.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    }
+    const withBreaks = html
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/(p|div|li|h1|h2|h3|tr)>/gi, '\n');
     const temp = document.createElement('div');
-    temp.innerHTML = html;
-    
-    // Get text content (automatically strips tags and decodes entities)
-    let text = temp.textContent || temp.innerText || '';
-    
-    // Clean up excessive whitespace and newlines
-    text = text
-      .replace(/\n\s*\n\s*\n/g, '\n\n') // Replace 3+ newlines with 2
-      .replace(/[ \t]+/g, ' ') // Replace multiple spaces/tabs with single space
-      .trim();
-    
+    temp.innerHTML = withBreaks;
+    let text = temp.innerText || temp.textContent || '';
+    text = text.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
     return text;
   }
 

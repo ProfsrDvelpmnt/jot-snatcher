@@ -7,14 +7,21 @@ interface SubscriptionCardProps {
 export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   usageData
 }) => {
-  // Extract usage data with fallbacks - using correct property names from useJobData
-  const currentUsage = usageData?.currentMonth || usageData?.currentUsage || usageData?.totalJobs || 0;
-  const monthlyLimit = usageData?.monthlyLimit || usageData?.dailyLimit || 400;
-  const remaining = usageData?.remainingUses || usageData?.remainingJobs || Math.max(0, monthlyLimit - currentUsage);
+  if (!usageData || typeof usageData.monthlyLimit !== 'number') {
+    return (
+      <div className="bg-light-bg/50 dark:bg-dark-bg/50 rounded-lg p-6 text-sm text-light-text-secondary dark:text-dark-text-secondary">
+        Not signed in
+      </div>
+    );
+  }
+
+  const currentUsage = usageData.currentMonth || usageData.currentUsage || 0;
+  const monthlyLimit = usageData.monthlyLimit;
+  const remaining = usageData.remainingUses ?? Math.max(0, monthlyLimit - currentUsage);
   const usagePercentage = monthlyLimit > 0 ? (currentUsage / monthlyLimit) * 100 : 0;
-  const tier = usageData?.tier ? usageData.tier.charAt(0).toUpperCase() + usageData.tier.slice(1) + ' Plan' : 'Executive Plan';
-  const lastUpdated = usageData?.lastUpdated ? new Date(usageData.lastUpdated).toLocaleTimeString() : 'Unknown';
-  const activeStatus = usageData?.activeStatus || 'Active';
+  const tier = usageData.tier ? usageData.tier.charAt(0).toUpperCase() + usageData.tier.slice(1) + ' Plan' : 'Free Plan';
+  const lastUpdated = usageData.lastUpdated ? new Date(usageData.lastUpdated).toLocaleTimeString() : 'Unknown';
+  const activeStatus = usageData.activeStatus || 'Active';
 
   // Debug logging to see what data we're getting
   console.log('🔍 SubscriptionCard - usageData:', usageData);

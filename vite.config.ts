@@ -51,17 +51,6 @@ export default defineConfig({
         }
       }
     },
-    // Plugin to copy standalone background script after build
-    {
-      name: 'copy-background',
-      writeBundle() {
-        // Copy standalone background script
-        if (existsSync('src/background/background-standalone.js')) {
-          copyFileSync('src/background/background-standalone.js', 'dist/background.js');
-          console.log('✅ Copied standalone background script to dist/background.js');
-        }
-      }
-    },
     // Plugin to remove CDN URLs from jsPDF for Manifest V3 compliance
     {
       name: 'remove-cdn-urls',

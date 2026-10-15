@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { JobData } from '@/types';
-import { JOB_FIELDS } from '@/utils/constants';
+import { JOB_FIELDS, CLEARANCE_OPTIONS, ENVIRONMENT_OPTIONS } from '@/utils/constants';
 
 interface JobDetailsProps {
   jobData: JobData | null;
@@ -11,6 +11,7 @@ interface JobDetailsProps {
   onUpdate: (updatedData: JobData) => void;
   isLoading: boolean;
   successMessage?: string | null;
+  captureNotice?: string | null;
   setSuccessMessage?: (message: string | null) => void;
 }
 
@@ -23,6 +24,7 @@ export const JobDetails: React.FC<JobDetailsProps> = ({
   onUpdate,
   isLoading,
   successMessage,
+  captureNotice,
   setSuccessMessage,
 }) => {
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -35,9 +37,10 @@ export const JobDetails: React.FC<JobDetailsProps> = ({
 
   const handleSave = (fieldKey: string) => {
     if (jobData) {
+      const choiceField = fieldKey === 'clearance' || fieldKey === 'environment';
       const updatedData = {
         ...jobData,
-        [fieldKey]: editValue
+        [fieldKey]: choiceField && !editValue ? 'Not specified' : editValue
       };
       onUpdate(updatedData);
     }
@@ -51,6 +54,11 @@ export const JobDetails: React.FC<JobDetailsProps> = ({
   };
   return (
     <div className="px-4">
+      {captureNotice && (
+        <p className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          {captureNotice}
+        </p>
+      )}
       {/* Success/Error Message Popup Overlay */}
       {successMessage && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
@@ -169,6 +177,11 @@ export const JobDetails: React.FC<JobDetailsProps> = ({
             }
             
             const isEditing = editingField === field.key;
+            const choices: readonly string[] | null = field.key === 'clearance'
+              ? CLEARANCE_OPTIONS
+              : field.key === 'environment'
+                ? ENVIRONMENT_OPTIONS
+                : null;
             
             return (
               <div key={field.key} className="flex justify-between items-start py-2 border-b border-light-border dark:border-dark-border last:border-b-0">
@@ -179,20 +192,34 @@ export const JobDetails: React.FC<JobDetailsProps> = ({
                 <div className="flex items-center gap-2 flex-1 justify-end">
                   {isEditing ? (
                     <>
-                      <input
-                        type="text"
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        className="text-sm text-light-text dark:text-dark-text bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded px-2 py-1 flex-1 min-w-0"
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            handleSave(field.key);
-                          } else if (e.key === 'Escape') {
-                            handleCancel();
-                          }
-                        }}
-                      />
+                      {choices ? (
+                        <select
+                          value={choices.includes(editValue) ? editValue : ''}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          className="text-sm text-light-text dark:text-dark-text bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded px-2 py-1 flex-1 min-w-0"
+                          autoFocus
+                        >
+                          <option value="">Not specified</option>
+                          {choices.map((option) => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          className="text-sm text-light-text dark:text-dark-text bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border rounded px-2 py-1 flex-1 min-w-0"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleSave(field.key);
+                            } else if (e.key === 'Escape') {
+                              handleCancel();
+                            }
+                          }}
+                        />
+                      )}
                       <button
                         onClick={() => handleSave(field.key)}
                         className="p-1 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 transition-colors"

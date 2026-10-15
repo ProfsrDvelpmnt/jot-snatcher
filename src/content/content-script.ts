@@ -77,6 +77,7 @@ if (typeof window !== 'undefined') {
 
 // Import the main functionality (static imports)
 import { extractionManager } from '@/extractors';
+import { runExtractionPipeline } from '@/extract/pipeline';
 // import { ExtractorDebugger } from '@/utils/extractor-debugger'; // Removed for production
 import { FallbackExtractor } from '@/utils/fallback-extractor';
 // Note: Content scripts can't directly import ES modules, using Chrome messaging instead
@@ -252,7 +253,7 @@ async function updateIframeHeader(userName: string | null, userEmail: string | n
     console.log('📤 Content script: Sending webapp connection status to iframe:', isWebappConnected);
     iframeElement.contentWindow.postMessage({
       type: 'WEBAPP_CONNECTION_UPDATE',
-      isWebappConnected: isWebappConnected
+      isWebappConnected: isSupabaseConnected
     }, '*');
   }
 }
@@ -755,46 +756,7 @@ function openIframePanel() {
     //   }
     // }, 2000);
     
-    // Set up periodic Supabase auth updates to iframe
-    const authUpdateInterval = setInterval(async () => {
-      // Check if extension context is still valid
-      if (!chrome.runtime?.id) {
-        console.log('⚠️ Extension context invalidated, stopping auth updates');
-        clearInterval(authUpdateInterval);
-        return;
-      }
-
-      const supabaseAuthData = await getSupabaseAuthData();
-      if (supabaseAuthData) {
-        // Update iframe header with user name
-        const isWebappLoggedIn = await checkWebappLogin();
-        await updateIframeHeader(supabaseAuthData.userName || null, supabaseAuthData.userEmail || null, isWebappLoggedIn);
-        // updateIframeSignOutButton(true); // Hidden - users can sign out via SignOutPanel
-        
-        if (iframe.contentWindow) {
-          iframe.contentWindow.postMessage({ 
-            type: 'AUTH_STATE_UPDATE', 
-            authState: {
-              isAuthenticated: true,
-              requiresLogin: false,
-              userId: supabaseAuthData.userId,
-              userName: supabaseAuthData.userName,
-              userEmail: supabaseAuthData.userEmail,
-              subscriptionInfo: supabaseAuthData.subscriptionInfo
-            }
-          }, '*');
-        }
-      } else {
-        // Clear iframe header if no auth data
-        await updateIframeHeader(null, null, false);
-        // updateIframeSignOutButton(false); // Hidden - users can sign out via SignOutPanel
-      }
-    }, 10000); // Update every 10 seconds
-    
-    // Store the interval for cleanup
-    (iframe as any).authUpdateInterval = authUpdateInterval;
-    
-    // Subscription info is now handled directly in sendAuthState() via getWebappAuthData()
+    // Usage is read when the panel opens and after submit, not on a timer.
     
     // Listen for theme changes via postMessage
     const handleThemeChange = (event: MessageEvent) => {
@@ -1852,32 +1814,38 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       })();
       return true; // Keep message channel open for async response
     
+    case 'SYNC_AUTH_TO_EXTENSION':
+      (async () => {
+        try {
+          const keys = Object.keys(localStorage).filter((key) => key.includes('auth-token') || key.startsWith('sb-'));
+          for (const key of keys) {
+            const raw = localStorage.getItem(key);
+            if (!raw) continue;
+            const parsed = JSON.parse(raw);
+            const session = parsed?.currentSession || parsed?.session || parsed;
+            if (session?.access_token && session?.refresh_token) {
+              sendResponse({ authData: session });
+              return;
+            }
+          }
+          sendResponse({ authData: null });
+        } catch (error) {
+          sendResponse({ authData: null, error: error instanceof Error ? error.message : 'sync failed' });
+        }
+      })();
+      return true;
+
     case 'EXTRACT_JOB_DATA':
       (async () => {
         try {
-          console.log('🔍 Starting enhanced job extraction...');
-          const jobData = await extractionManager.extractCurrentJob();
-          
-          if (jobData) {
-            console.log('✅ Job data extracted successfully:', jobData);
-            sendResponse({ success: true, data: jobData });
-          } else {
-            console.log('⚠️ No job data found with enhanced extraction, trying fallback...');
-            const fallbackData = FallbackExtractor.extractWithCommonPatterns();
-            if (fallbackData) {
-              console.log('✅ Fallback extraction successful:', fallbackData);
-              sendResponse({ success: true, data: fallbackData });
-            } else {
-              console.log('❌ No job data found on current page');
-              sendResponse({ success: false, error: 'No job data found' });
-            }
-          }
+          const result = await runExtractionPipeline();
+          sendResponse({ success: true, data: result.jobData, generic: result.generic, fieldSources: result.fieldSources });
         } catch (error) {
           console.error('❌ Error extracting job data:', error);
           sendResponse({ success: false, error: error instanceof Error ? error.message : 'Unknown error' });
         }
       })();
-      return true; // Keep message channel open for async response
+      return true;
     
     case 'CHECK_SITE_SUPPORT':
       const isSupported = extractionManager.isSiteSupported();

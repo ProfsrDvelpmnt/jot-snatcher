@@ -484,7 +484,11 @@ export function detectSite(url: string): SiteConfig | null {
   try {
     const domain = new URL(url).hostname.toLowerCase();
     
-    for (const [key, config] of Object.entries(SITE_CONFIGS)) {
+    if ((domain === 'hiringcafe.com' || domain.endsWith('.hiringcafe.com')) && SITE_CONFIGS['hiring-cafe']?.enabled) {
+      return SITE_CONFIGS['hiring-cafe'];
+    }
+
+    for (const [, config] of Object.entries(SITE_CONFIGS)) {
       if (domain.includes(config.domain) && config.enabled) {
         return config;
       }

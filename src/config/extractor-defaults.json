@@ -1,0 +1,53 @@
+{
+  "linkedin": {
+    "urlPatterns": ["/jobs/"],
+    "fields": {
+      "position": [{ "type": "css", "selector": "main h1" }],
+      "organization": [{ "type": "linkHref", "pattern": "/company/" }]
+    }
+  },
+  "indeed": {
+    "urlPatterns": ["/jobs", "/viewjob"],
+    "fields": {
+      "position": [{ "type": "css", "selector": "h1" }]
+    }
+  },
+  "monster": {
+    "urlPatterns": ["/jobs", "/job-openings"],
+    "fields": {
+      "position": [{ "type": "css", "selector": "[data-testid='svx-job-view-wrapper'] [data-testid='jobTitle']" }],
+      "organization": [{ "type": "css", "selector": "[data-testid='svx-job-view-wrapper'] [data-testid='company']" }]
+    }
+  },
+  "ziprecruiter": {
+    "urlPatterns": ["/jobs"],
+    "fields": {
+      "organization": [{ "type": "linkHref", "pattern": "/co/" }],
+      "location": [{ "type": "regexOnText", "pattern": "[A-Z][\\w .'-]+,\\s?[A-Z]{2}\\b" }]
+    }
+  },
+  "greenhouse": {
+    "urlPatterns": ["/jobs/"],
+    "fields": {
+      "position": [{ "type": "css", "selector": "h1" }]
+    }
+  },
+  "hiring-cafe": {
+    "urlPatterns": ["/job/"],
+    "fields": {
+      "position": [{ "type": "css", "selector": "h1" }]
+    }
+  },
+  "workday": {
+    "urlPatterns": ["/job"],
+    "fields": {
+      "position": [{ "type": "css", "selector": "h1, h2" }]
+    }
+  },
+  "theladders": {
+    "urlPatterns": ["/job"],
+    "fields": {
+      "position": [{ "type": "css", "selector": "h1" }]
+    }
+  }
+}

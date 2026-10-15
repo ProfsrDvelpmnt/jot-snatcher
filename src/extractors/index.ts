@@ -134,7 +134,7 @@ export class ExtractionManager {
     if (domain.includes('monster')) return 'monster';
     if (domain.includes('ziprecruiter')) return 'ziprecruiter';
     if (domain.includes('greenhouse')) return 'greenhouse';
-    if (domain.includes('hiring.cafe')) return 'hiring-cafe';
+    if (domain.includes('hiring.cafe') || domain.includes('hiringcafe.com')) return 'hiring-cafe';
     if (domain.includes('indeed')) return 'indeed';
     if (domain.includes('myworkdayjobs')) return 'workday';
     if (domain.includes('theladders')) return 'theladders';

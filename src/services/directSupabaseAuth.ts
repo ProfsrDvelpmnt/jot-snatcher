@@ -504,8 +504,10 @@ export class DirectSupabaseAuthService {
 
   // Sign in with email and password using direct Supabase
   public async signIn(email: string, password: string): Promise<{ success: boolean; error?: string }> {
-    try {
-      console.log('🔐 DirectSupabaseAuth: Attempting sign in for:', email);
+    if (typeof window !== 'undefined' && chrome?.runtime?.id) {
+      const result = await chrome.runtime.sendMessage({ type: 'SIGN_IN', email, password });
+      return result?.success ? { success: true } : { success: false, error: result?.error || 'Login failed' };
+    }
       
       // Always try to use the Supabase client directly first (for development)
       // In production builds with background-standalone.js, this will send to background script
@@ -572,17 +574,13 @@ export class DirectSupabaseAuthService {
           };
         }
       }
-    } catch (error) {
-      console.error('❌ DirectSupabaseAuth: Sign in error:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
-      };
-    }
   }
 
-  // Sign out using direct Supabase
   public async signOut(): Promise<{ success: boolean; error?: string }> {
+    if (typeof window !== 'undefined' && chrome?.runtime?.id) {
+      const result = await chrome.runtime.sendMessage({ type: 'SIGN_OUT' });
+      return result?.success ? { success: true } : { success: false, error: result?.error || 'Sign out failed' };
+    }
     try {
       console.log('👋 DirectSupabaseAuth: Signing out...');
       
